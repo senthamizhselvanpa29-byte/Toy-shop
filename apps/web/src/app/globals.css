@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "@toyshop/theme/theme.css";
+
+/* Let Tailwind find classes used inside the shared packages. */
+@source "../../../../packages";
+
+@layer base {
+  html {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+  }
+
+  body {
+    font-family: var(--font-body);
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+  }
+}

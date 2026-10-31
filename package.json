@@ -1,0 +1,19 @@
+{
+  "name": "toy-shop",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @toyshop/web",
+    "build": "npm run build --workspace @toyshop/web",
+    "start": "npm run start --workspace @toyshop/web",
+    "lint": "npm run lint --workspace @toyshop/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

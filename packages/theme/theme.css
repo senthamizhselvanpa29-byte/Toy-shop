@@ -1,0 +1,33 @@
+/* Child-friendly design tokens for Tailwind CSS v4.
+   Keep in sync with src/index.ts. */
+@theme {
+  --color-cream: #fff9ee;
+  --color-ink: #2b2a4c;
+  --color-ink-soft: #5b5a7a;
+  --color-sunshine: #ffc93c;
+  --color-sunshine-dark: #e0a800;
+  --color-sky: #4fc3f7;
+  --color-sky-dark: #0288d1;
+  --color-bubblegum: #ff7eb6;
+  --color-bubblegum-dark: #d81b72;
+  --color-mint: #5edca6;
+  --color-mint-dark: #157a52;
+  --color-orange: #ff9f43;
+  --color-orange-dark: #b85c00;
+  --color-grape: #9b7bff;
+
+  --radius-bubble: 28px;
+
+  --font-heading: var(--font-fredoka), "Baloo 2", system-ui, sans-serif;
+  --font-body: var(--font-nunito), system-ui, sans-serif;
+
+  --shadow-soft: 0 6px 0 rgb(43 42 76 / 0.12);
+
+  --animate-wiggle: wiggle 0.4s ease-in-out;
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+}
