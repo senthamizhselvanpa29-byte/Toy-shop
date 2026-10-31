@@ -1,8 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { AgeGroup } from "@toyshop/shared";
 import { cn } from "@/lib/cn";
 import { AgeBadge, Badge } from "./Badge";
-import { Button } from "./Button";
+import { Button, buttonClasses } from "./Button";
 import { PriceTag } from "./PriceTag";
 import { bgColor, type ThemeColor } from "./colors";
 
@@ -20,11 +21,15 @@ export type ProductCardData = {
   isNew?: boolean;
 };
 
+// With `href`, the whole card links to the toy's page (shop). Without it, the
+// card shows its own buttons (previews in the owner area and style guide).
 export function ProductCard({
   product,
+  href,
   className,
 }: {
   product: ProductCardData;
+  href?: string;
   className?: string;
 }) {
   const outOfStock = product.stock <= 0;
@@ -33,7 +38,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group flex flex-col overflow-hidden rounded-bubble border-2 border-ink/10 bg-white shadow-soft transition hover:-translate-y-1",
+        "group relative flex flex-col overflow-hidden rounded-bubble border-2 border-ink/10 bg-white shadow-soft transition hover:-translate-y-1",
         className,
       )}
     >
@@ -64,20 +69,33 @@ export function ProductCard({
             New
           </Badge>
         )}
-        <button
-          type="button"
-          aria-label={`Add ${product.name} to wishlist`}
-          className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-lg shadow-soft transition hover:scale-110 focus-visible:outline-3 focus-visible:outline-sky-dark"
-        >
-          🤍
-        </button>
+        {!href && (
+          <button
+            type="button"
+            aria-label={`Add ${product.name} to wishlist`}
+            className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-lg shadow-soft transition hover:scale-110 focus-visible:outline-3 focus-visible:outline-sky-dark"
+          >
+            🤍
+          </button>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <p className="text-xs font-bold tracking-wide text-ink-soft uppercase">
           {product.categoryName}
         </p>
-        <h3 className="line-clamp-2 text-lg leading-snug">{product.name}</h3>
+        <h3 className="line-clamp-2 text-lg leading-snug">
+          {href ? (
+            <Link
+              href={href}
+              className="after:absolute after:inset-0 after:rounded-bubble focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:outline-sky-dark"
+            >
+              {product.name}
+            </Link>
+          ) : (
+            product.name
+          )}
+        </h3>
         <div>
           <AgeBadge age={product.ageGroup} />
         </div>
@@ -91,14 +109,26 @@ export function ProductCard({
             Only {product.stock} left!
           </p>
         )}
-        <Button
-          variant={outOfStock ? "ghost" : "primary"}
-          size="sm"
-          disabled={outOfStock}
-          className="mt-1 w-full hover:animate-wiggle"
-        >
-          {outOfStock ? "Out of stock" : "Add to cart 🛒"}
-        </Button>
+        {href ? (
+          <span
+            aria-hidden
+            className={cn(
+              buttonClasses(outOfStock ? "ghost" : "primary", "sm"),
+              "mt-1 w-full group-hover:animate-wiggle",
+            )}
+          >
+            {outOfStock ? "Sold out" : "See toy →"}
+          </span>
+        ) : (
+          <Button
+            variant={outOfStock ? "ghost" : "primary"}
+            size="sm"
+            disabled={outOfStock}
+            className="mt-1 w-full hover:animate-wiggle"
+          >
+            {outOfStock ? "Out of stock" : "Add to cart 🛒"}
+          </Button>
+        )}
       </div>
     </article>
   );
