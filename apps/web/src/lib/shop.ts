@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
 import { AGE_GROUPS, discountPercent, type AgeGroup } from "@toyshop/shared";
 import type { ProductCardData, ThemeColor } from "@/components/ui";
 import { productImageUrl, type Category } from "@/lib/catalog";
@@ -249,4 +249,17 @@ export async function getAllProductSlugs(): Promise<{ slug: string; updatedAt: s
     .eq("status", "published")
     .limit(5000);
   return (data ?? []).map((row) => ({ slug: row.slug, updatedAt: row.updated_at }));
+}
+
+// A signed-in customer's saved toys (newest first). Hidden toys are left out.
+export async function getWishlistProducts(supabase: SupabaseClient, userId: string): Promise<ShopProduct[]> {
+  const { data } = await supabase
+    .from("wishlist_items")
+    .select(`created_at, products(${PRODUCT_FIELDS})`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  return ((data ?? []) as unknown as { products: Row | null }[])
+    .map((item) => item.products)
+    .filter((row): row is Row => row !== null)
+    .map(toShopProduct);
 }

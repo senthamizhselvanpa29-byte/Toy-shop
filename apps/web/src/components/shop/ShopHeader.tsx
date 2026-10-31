@@ -3,6 +3,7 @@ import { buttonClasses } from "@/components/ui";
 import type { Category } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { bgColor, isThemeColor } from "@/components/ui/colors";
+import { AccountLink } from "./AccountLink";
 
 export function ShopHeader({ categories }: { categories: Category[] }) {
   return (
@@ -33,9 +34,15 @@ export function ShopHeader({ categories }: { categories: Category[] }) {
           </div>
         </form>
 
-        <Link href="/toys" className={cn(buttonClasses("primary", "sm"), "ml-auto sm:ml-0")}>
-          All toys
-        </Link>
+        <div className="ml-auto flex items-center gap-1 sm:ml-0">
+          {/* On phones the category chips below cover browsing, so this is hidden. */}
+          <span className="hidden sm:block">
+            <Link href="/toys" className={buttonClasses("primary", "sm")}>
+              All toys
+            </Link>
+          </span>
+          <AccountLink />
+        </div>
       </div>
 
       {categories.length > 0 && (

@@ -2,10 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 
-const LOGIN_PATH = "/admin/login";
+// Pages that need a signed-in person, and where to send them otherwise.
+const PROTECTED = [
+  { prefix: "/admin", login: "/admin/login", open: ["/admin/login"] },
+  { prefix: "/account", login: "/account/login", open: ["/account/login", "/account/callback"] },
+];
 
-// Refreshes the Supabase session cookie and sends signed-out visitors
-// of the admin area to the login page.
+// Refreshes the Supabase session cookie and sends signed-out visitors of the
+// owner area or customer account pages to the right login page.
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) return NextResponse.next({ request });
 
@@ -34,11 +38,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-  if (!user && pathname.startsWith("/admin") && pathname !== LOGIN_PATH) {
+  const { pathname, search } = request.nextUrl;
+  const area = PROTECTED.find((item) => pathname.startsWith(item.prefix));
+  if (!user && area && !area.open.includes(pathname)) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = LOGIN_PATH;
-    loginUrl.search = "";
+    loginUrl.pathname = area.login;
+    loginUrl.search = area.prefix === "/account" ? `?next=${encodeURIComponent(pathname + search)}` : "";
     return NextResponse.redirect(loginUrl);
   }
 

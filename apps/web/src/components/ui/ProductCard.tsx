@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { AgeGroup } from "@toyshop/shared";
 import { cn } from "@/lib/cn";
 import { AgeBadge, Badge } from "./Badge";
@@ -26,10 +27,13 @@ export type ProductCardData = {
 export function ProductCard({
   product,
   href,
+  topRight,
   className,
 }: {
   product: ProductCardData;
   href?: string;
+  // Extra control over the photo's top-right corner (e.g. the wishlist heart).
+  topRight?: ReactNode;
   className?: string;
 }) {
   const outOfStock = product.stock <= 0;
@@ -69,7 +73,8 @@ export function ProductCard({
             New
           </Badge>
         )}
-        {!href && (
+        {topRight && <div className="absolute top-3 right-3 z-10">{topRight}</div>}
+        {!href && !topRight && (
           <button
             type="button"
             aria-label={`Add ${product.name} to wishlist`}

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AGE_GROUPS, formatPaise } from "@toyshop/shared";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { ProductGrid } from "@/components/shop/ProductGrid";
+import { WishlistButton } from "@/components/shop/WishlistButton";
 import { AgeBadge, Badge, Button, Card, PriceTag, type ThemeColor } from "@/components/ui";
 import { getProductBySlug, getRelatedProducts } from "@/lib/shop";
 
@@ -110,6 +111,7 @@ export default async function ProductPage({ params }: Props) {
             <p className="text-center text-sm text-ink-soft">
               🛍️ Online ordering opens very soon — with UPI, cards and cash on delivery.
             </p>
+            <WishlistButton productId={product.id} productName={product.name} variant="full" />
           </Card>
 
           {details.length > 0 && (

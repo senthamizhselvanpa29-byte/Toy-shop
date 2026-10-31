@@ -1,6 +1,7 @@
 import { ProductCard } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { toCardData, type ShopProduct } from "@/lib/shop";
+import { WishlistButton } from "./WishlistButton";
 
 export function ProductGrid({
   products,
@@ -16,6 +17,7 @@ export function ProductGrid({
           <ProductCard
             product={toCardData(product)}
             href={`/toys/${product.slug}`}
+            topRight={<WishlistButton productId={product.id} productName={product.name} />}
             className="w-full"
           />
         </li>
