@@ -30,3 +30,13 @@ export async function getViewer(): Promise<Viewer> {
   }
   return { status: "customer", user };
 }
+
+// For Server Actions that change shop data. The database rules enforce the same
+// thing; this gives a clear error early.
+export async function requireOwner() {
+  const viewer = await getViewer();
+  if (viewer.status !== "owner") {
+    throw new Error("Only the shop owner can do this.");
+  }
+  return { supabase: await createClient(), user: viewer.user };
+}
