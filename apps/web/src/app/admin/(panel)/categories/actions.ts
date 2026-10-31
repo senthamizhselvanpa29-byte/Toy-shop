@@ -9,7 +9,7 @@ export type CategoryResult = { errors?: Record<string, string> };
 function refresh() {
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }
 
 export async function saveCategory(

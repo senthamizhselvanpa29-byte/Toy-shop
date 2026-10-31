@@ -22,7 +22,8 @@ function refreshShopPages(productId?: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
-  revalidatePath("/");
+  // Refresh every shop page (home, listings, toy pages).
+  revalidatePath("/", "layout");
 }
 
 // Inserts a product, adding a short suffix to the web address if the name is taken.
