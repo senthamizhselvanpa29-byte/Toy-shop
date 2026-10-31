@@ -9,8 +9,8 @@ type NavItem = { label: string; icon: string; href?: string };
 // Items without an href are coming in later milestones.
 const items: NavItem[] = [
   { label: "Dashboard", icon: "🏠", href: "/admin" },
-  { label: "Products", icon: "🧸" },
-  { label: "Categories", icon: "🗂️" },
+  { label: "Products", icon: "🧸", href: "/admin/products" },
+  { label: "Categories", icon: "🗂️", href: "/admin/categories" },
   { label: "Orders", icon: "📦" },
   { label: "Customers", icon: "👨‍👩‍👧" },
   { label: "Coupons", icon: "🎟️" },
@@ -24,7 +24,10 @@ export function AdminNav() {
     <nav aria-label="Owner menu">
       <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
         {items.map((item) => {
-          const active = item.href === pathname;
+          const active =
+            item.href === "/admin"
+              ? pathname === "/admin"
+              : Boolean(item.href && pathname.startsWith(item.href));
           const content = (
             <>
               <span aria-hidden>{item.icon}</span>
