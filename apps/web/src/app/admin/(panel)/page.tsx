@@ -1,23 +1,34 @@
 import Link from "next/link";
+import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { buttonClasses, Card } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { deleteDemoProducts } from "./products/actions";
 
-async function countProducts(status?: string) {
+async function countProducts(filter: { status?: string; demo?: boolean } = {}) {
   const supabase = await createClient();
   let query = supabase.from("products").select("id", { count: "exact", head: true });
-  if (status) query = query.eq("status", status);
+  if (filter.status) query = query.eq("status", filter.status);
+  if (filter.demo !== undefined) query = query.eq("is_demo", filter.demo);
   const { count } = await query;
   return count ?? 0;
 }
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ demoRemoved?: string }>;
+}) {
+  const { demoRemoved } = await searchParams;
   const supabase = await createClient();
-  const [viewer, totalProducts, liveProducts, lowStock, { count: categoryCount }] =
+  const [viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }] =
     await Promise.all([
       getViewer(),
       countProducts(),
-      countProducts("published"),
+      countProducts({ status: "published" }),
+      countProducts({ demo: true }),
+      countProducts({ demo: false }),
+      countProducts({ status: "published", demo: false }),
       supabase
         .from("products")
         .select("id", { count: "exact", head: true })
@@ -40,8 +51,9 @@ export default async function AdminDashboard() {
   const steps = [
     { done: true, label: "Log in to your owner area" },
     { done: (categoryCount ?? 0) > 0, label: "Set up your toy categories", href: "/admin/categories" },
-    { done: totalProducts > 0, label: "Add your first toy with photos", href: "/admin/products/new" },
-    { done: liveProducts > 0, label: "Publish a toy to the shop", href: "/admin/products" },
+    { done: ownProducts > 0, label: "Add your first toy with photos", href: "/admin/products/new" },
+    { done: ownLive > 0, label: "Publish a toy to the shop", href: "/admin/products" },
+    { done: ownProducts > 0 && demoProducts === 0, label: "Replace the demo toys with your own" },
     { done: false, label: "Take your first order", when: "Milestone 9" },
   ];
 
@@ -58,6 +70,32 @@ export default async function AdminDashboard() {
           ➕ Add a toy
         </Link>
       </div>
+
+      {demoRemoved && (
+        <p role="status" className="rounded-2xl bg-mint/25 px-4 py-3 font-bold text-mint-dark">
+          All demo toys removed. The shelves are ready for your own toys! 🧸
+        </p>
+      )}
+
+      {demoProducts > 0 && (
+        <Card className="flex flex-col gap-4 border-grape/40 bg-grape/10 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl">🎭 Your shop has {demoProducts} demo toys</h2>
+            <p className="text-ink-soft">
+              They make the shop look full while you set up. Edit any demo toy to make it your own,
+              or remove them all once your real toys are in.
+            </p>
+          </div>
+          <form action={deleteDemoProducts} className="shrink-0">
+            <ConfirmSubmitButton
+              variant="danger"
+              message={`Remove all ${demoProducts} demo toys? Toys you've edited are kept.`}
+            >
+              Remove all demo toys
+            </ConfirmSubmitButton>
+          </form>
+        </Card>
+      )}
 
       <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (

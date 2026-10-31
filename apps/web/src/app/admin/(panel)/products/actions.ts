@@ -12,7 +12,7 @@ import {
   type ProductStatus,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
-import { PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
+import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
 
 export type SaveProductResult = { errors: Record<string, string> };
 
@@ -49,7 +49,8 @@ async function insertWithUniqueSlug(
 }
 
 // Deletes photo files that no product uses any more.
-async function removeUnusedFiles(supabase: SupabaseClient, paths: string[]) {
+async function removeUnusedFiles(supabase: SupabaseClient, allPaths: string[]) {
+  const paths = allPaths.filter((path) => !isDemoImagePath(path));
   if (paths.length === 0) return;
   const { data: stillUsed } = await supabase
     .from("product_images")
@@ -73,7 +74,8 @@ export async function saveProduct(
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const values = parsed.data;
 
-  if (values.images.some((image) => !image.storagePath.startsWith("products/"))) {
+  const validPath = (path: string) => path.startsWith("products/") || isDemoImagePath(path);
+  if (values.images.some((image) => !validPath(image.storagePath))) {
     return { errors: { images: "One of the photos didn't upload properly. Please remove it and try again." } };
   }
 
@@ -92,6 +94,8 @@ export async function saveProduct(
     weight_grams: values.weightGrams,
     bis_license: values.bisLicense,
     is_featured: values.isFeatured,
+    // Once the owner edits a demo toy, it becomes one of their own.
+    is_demo: false,
   };
   if (status !== "keep") row.status = status;
 
@@ -195,6 +199,29 @@ export async function setProductStatus(productId: string, status: ProductStatus)
   const { supabase } = await requireOwner();
   await supabase.from("products").update({ status }).eq("id", productId);
   refreshShopPages(productId);
+}
+
+export async function deleteDemoProducts() {
+  const { supabase } = await requireOwner();
+
+  const { data: demo } = await supabase
+    .from("products")
+    .select("id, product_images(storage_path)")
+    .eq("is_demo", true);
+  const ids = (demo ?? []).map((product) => product.id);
+  if (ids.length) {
+    const { error } = await supabase.from("products").delete().in("id", ids);
+    if (error) throw new Error("Couldn't remove the demo toys");
+    await removeUnusedFiles(
+      supabase,
+      (demo ?? []).flatMap((product) =>
+        (product.product_images as { storage_path: string }[]).map((image) => image.storage_path),
+      ),
+    );
+  }
+
+  refreshShopPages();
+  redirect("/admin?demoRemoved=1");
 }
 
 export async function deleteProduct(productId: string) {

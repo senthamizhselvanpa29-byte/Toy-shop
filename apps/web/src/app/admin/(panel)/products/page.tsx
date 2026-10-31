@@ -14,6 +14,7 @@ type Row = {
   price_paise: number;
   stock: number;
   status: ProductStatus;
+  is_demo: boolean;
   categories: { name: string; icon: string } | null;
   product_images: { storage_path: string; position: number }[];
 };
@@ -31,7 +32,7 @@ export default async function ProductsPage({
   let query = supabase
     .from("products")
     .select(
-      "id, name, price_paise, stock, status, categories(name, icon), product_images(storage_path, position)",
+      "id, name, price_paise, stock, status, is_demo, categories(name, icon), product_images(storage_path, position)",
     )
     .order("updated_at", { ascending: false })
     .order("position", { referencedTable: "product_images", ascending: true })
@@ -141,6 +142,7 @@ export default async function ProductsPage({
                         <Badge color={statusColor[product.status]}>
                           {label.icon} {label.label}
                         </Badge>
+                        {product.is_demo && <Badge color="grape">🎭 Demo</Badge>}
                         <span
                           className={cn(
                             "text-sm font-bold",
