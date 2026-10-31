@@ -67,6 +67,13 @@ export default async function EditProductPage({
 
       <SavedBanner kind={saved} />
 
+      {p.is_demo && (
+        <p className="rounded-2xl bg-grape/15 px-4 py-3 text-ink">
+          🎭 <strong>This is a demo toy.</strong> Save any change and it becomes one of your own toys
+          (it won&apos;t be removed with the other demo toys).
+        </p>
+      )}
+
       {/* key resets the form after each save so it shows the saved values */}
       <ProductForm
         key={p.updated_at}

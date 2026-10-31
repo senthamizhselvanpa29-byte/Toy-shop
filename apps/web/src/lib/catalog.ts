@@ -36,11 +36,20 @@ export type Product = {
   bis_license: string;
   status: ProductStatus;
   is_featured: boolean;
+  is_demo: boolean;
   created_at: string;
   updated_at: string;
 };
 
+// Demo toy photos ship with the website (public/demo) instead of Supabase storage.
+const DEMO_IMAGE_PATH = /^demo\/[a-z0-9-]+\.webp$/;
+
+export function isDemoImagePath(storagePath: string): boolean {
+  return DEMO_IMAGE_PATH.test(storagePath);
+}
+
 export function productImageUrl(storagePath: string): string {
+  if (isDemoImagePath(storagePath)) return `/${storagePath}`;
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   return `${base}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${storagePath}`;
 }
