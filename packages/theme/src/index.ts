@@ -12,8 +12,9 @@ export const colors = {
   bubblegum: "#FF7EB6",
   bubblegumDark: "#D81B72",
   mint: "#5EDCA6",
-  mintDark: "#1E9E6A",
+  mintDark: "#157A52",
   orange: "#FF9F43",
+  orangeDark: "#B85C00",
   grape: "#9B7BFF",
   white: "#FFFFFF",
 } as const;

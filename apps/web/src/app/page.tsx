@@ -1,16 +1,8 @@
+import Link from "next/link";
 import { DEFAULT_CATEGORIES, formatPaise } from "@toyshop/shared";
+import { buttonClasses, CategoryTile } from "@/components/ui";
 
-// Temporary welcome page for Milestone 1 — shows the theme is wired up.
-// The real storefront arrives in Milestone 6.
-const swatchClasses: Record<string, string> = {
-  sky: "bg-sky",
-  grape: "bg-grape",
-  bubblegum: "bg-bubblegum",
-  orange: "bg-orange",
-  mint: "bg-mint",
-  sunshine: "bg-sunshine",
-};
-
+// Temporary welcome page — the real storefront arrives in Milestone 6.
 export default function Home() {
   return (
     <main className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-4 py-16 text-center">
@@ -27,24 +19,15 @@ export default function Home() {
 
       <ul className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
         {DEFAULT_CATEGORIES.map((category) => (
-          <li
-            key={category.slug}
-            className={`${swatchClasses[category.color]} rounded-bubble shadow-soft flex flex-col items-center gap-2 px-4 py-6 font-heading text-lg text-ink transition-transform hover:-translate-y-1`}
-          >
-            <span className="text-4xl" aria-hidden>
-              {category.icon}
-            </span>
-            {category.name}
+          <li key={category.slug}>
+            <CategoryTile {...category} />
           </li>
         ))}
       </ul>
 
-      <button
-        type="button"
-        className="rounded-full bg-sunshine px-8 py-3 font-heading text-xl text-ink shadow-soft hover:animate-wiggle"
-      >
-        Coming soon 🎉
-      </button>
+      <Link href="/style-guide" className={buttonClasses("primary", "lg")}>
+        See the style guide 🎨
+      </Link>
     </main>
   );
 }
