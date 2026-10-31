@@ -14,10 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: npm
 
-      # Switch to `npm ci` once package-lock.json is committed.
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
