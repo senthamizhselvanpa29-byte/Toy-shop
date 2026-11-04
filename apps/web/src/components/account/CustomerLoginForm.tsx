@@ -59,7 +59,14 @@ export function CustomerLoginForm({ next }: { next: string }) {
     const { error: sendError } =
       method === "phone"
         ? await supabase.auth.signInWithOtp({ phone: target })
-        : await supabase.auth.signInWithOtp({ email: target.toLowerCase(), options: { shouldCreateUser: true } });
+        : await supabase.auth.signInWithOtp({
+            email: target.toLowerCase(),
+            options: {
+              shouldCreateUser: true,
+              // If the email shows a link instead of a code, clicking it still logs in.
+              emailRedirectTo: `${window.location.origin}/account/callback?next=${encodeURIComponent(next)}`,
+            },
+          });
     setBusy(false);
 
     if (sendError) return setError(friendlyError(sendError.message));
