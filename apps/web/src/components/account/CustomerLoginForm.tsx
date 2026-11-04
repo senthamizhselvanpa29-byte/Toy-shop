@@ -20,6 +20,9 @@ function friendlyError(message: string): string {
   if (text.includes("expired") || text.includes("invalid") || text.includes("token")) {
     return "That code didn't work. Check it, or ask for a new one.";
   }
+  if (text.includes("sending") || text.includes("smtp") || text.includes("email address not authorized")) {
+    return "We couldn't send the email just now. Please try again in a few minutes.";
+  }
   if (text.includes("sms") || text.includes("phone provider")) {
     return "We couldn't send an SMS right now. Please try email instead.";
   }
