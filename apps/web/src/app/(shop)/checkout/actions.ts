@@ -65,6 +65,15 @@ export async function placeOrder(input: {
   const admin = createAdminClient();
   const isCod = input.paymentMethod === "cod";
   const now = new Date().toISOString();
+
+  // A new attempt replaces any earlier one whose payment was never finished.
+  // (If such a payment still arrives later, the webhook marks that order paid.)
+  await admin
+    .from("orders")
+    .update({ status: "cancelled" })
+    .eq("user_id", user.id)
+    .eq("status", "pending_payment")
+    .eq("payment_status", "pending");
   const { data: order, error: orderError } = await admin
     .from("orders")
     .insert({

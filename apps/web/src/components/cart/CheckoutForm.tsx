@@ -80,15 +80,26 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
         return;
       }
 
-      // The order exists now, so the cart's job is done.
-      cart.clear();
-      if (!result.razorpay) {
+      const placed = () => {
+        cart.clear();
         router.push(`/account/orders/${result.orderId}?placed=1`);
+      };
+      if (chosenMethod === "cod") return placed();
+      if (!result.razorpay) {
+        setError("We couldn't start the online payment. Please try again, or choose cash on delivery.");
+        setBusy(false);
         return;
       }
+
+      // The cart is only emptied once the payment succeeds, so a cancelled
+      // payment leaves everything as it was.
       const outcome = await payWithRazorpay(result.orderId, result.razorpay);
-      router.push(
-        `/account/orders/${result.orderId}?${outcome === "paid" ? "placed=1" : `payment=${outcome}`}`,
+      if (outcome === "paid") return placed();
+      setBusy(false);
+      setError(
+        outcome === "closed"
+          ? "Payment cancelled — no money was taken. Your cart is still here: try again, or choose cash on delivery."
+          : "The payment didn't go through and no money was taken. Please try again, or choose another way to pay.",
       );
     });
   }
