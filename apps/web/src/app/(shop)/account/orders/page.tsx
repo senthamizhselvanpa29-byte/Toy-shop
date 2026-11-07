@@ -28,6 +28,8 @@ export default async function OrdersPage() {
     .from("orders")
     .select("id, order_number, status, total_paise, created_at, order_items(quantity)")
     .eq("user_id", user.id)
+    // Only orders that were really placed (not unfinished payment attempts).
+    .not("placed_at", "is", null)
     .order("created_at", { ascending: false });
   const orders = (data ?? []) as {
     id: string;

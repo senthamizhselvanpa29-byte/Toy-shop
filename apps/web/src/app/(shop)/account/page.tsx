@@ -27,7 +27,11 @@ export default async function AccountPage() {
       .order("is_default", { ascending: false })
       .order("created_at", { ascending: false }),
     supabase.from("wishlist_items").select("product_id", { count: "exact", head: true }).eq("user_id", user.id),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .not("placed_at", "is", null),
   ]);
 
   const name = profile?.full_name ?? "";
