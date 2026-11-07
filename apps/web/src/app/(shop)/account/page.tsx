@@ -18,7 +18,7 @@ export default async function AccountPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/account/login");
 
-  const [{ data: profile }, { data: addresses }, { count: wishlistCount }] = await Promise.all([
+  const [{ data: profile }, { data: addresses }, { count: wishlistCount }, { count: orderCount }] = await Promise.all([
     supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
     supabase
       .from("addresses")
@@ -27,6 +27,7 @@ export default async function AccountPage() {
       .order("is_default", { ascending: false })
       .order("created_at", { ascending: false }),
     supabase.from("wishlist_items").select("product_id", { count: "exact", head: true }).eq("user_id", user.id),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ]);
 
   const name = profile?.full_name ?? "";
@@ -48,11 +49,11 @@ export default async function AccountPage() {
           <p className="font-heading text-xl">My wishlist</p>
           <p className="text-sm">{wishlistCount ?? 0} saved toy(s)</p>
         </Link>
-        <div className="rounded-bubble bg-sky/40 p-5 shadow-soft">
+        <Link href="/account/orders" className="rounded-bubble bg-sky p-5 shadow-soft transition hover:-translate-y-1">
           <span className="text-3xl" aria-hidden>📦</span>
           <p className="font-heading text-xl">My orders</p>
-          <p className="text-sm text-ink-soft">Your orders will appear here once online ordering opens.</p>
-        </div>
+          <p className="text-sm">{orderCount ?? 0} order(s) · track and pay</p>
+        </Link>
       </div>
 
       <Card className="flex flex-col gap-4">

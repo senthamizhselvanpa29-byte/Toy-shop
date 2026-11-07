@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CartLink } from "@/components/cart/CartLink";
 import { useCustomer } from "./CustomerProvider";
 
 export function AccountLink() {
@@ -20,6 +21,7 @@ export function AccountLink() {
           </span>
         )}
       </Link>
+      <CartLink />
       <Link
         href={signedIn ? "/account" : "/account/login"}
         className="flex items-center gap-1.5 rounded-full px-3 py-2 font-bold hover:bg-ink/5"
