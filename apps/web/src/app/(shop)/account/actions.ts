@@ -34,6 +34,7 @@ export async function updateProfile(input: ProfileFormInput): Promise<FormResult
   if (error) return { errors: { form: "Couldn't save your details. Please try again." } };
 
   revalidatePath("/account");
+  revalidatePath("/checkout");
   return { ok: true };
 }
 
@@ -73,6 +74,7 @@ export async function saveAddress(addressId: string | null, input: AddressFormIn
   if (error) return { errors: { form: "Couldn't save the address. Please try again." } };
 
   revalidatePath("/account");
+  revalidatePath("/checkout");
   return { ok: true };
 }
 
@@ -81,6 +83,7 @@ export async function setDefaultAddress(addressId: string) {
   await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id).eq("is_default", true);
   await supabase.from("addresses").update({ is_default: true }).eq("id", addressId).eq("user_id", user.id);
   revalidatePath("/account");
+  revalidatePath("/checkout");
 }
 
 export async function deleteAddress(addressId: string) {
@@ -104,4 +107,5 @@ export async function deleteAddress(addressId: string) {
     if (next) await supabase.from("addresses").update({ is_default: true }).eq("id", next.id);
   }
   revalidatePath("/account");
+  revalidatePath("/checkout");
 }

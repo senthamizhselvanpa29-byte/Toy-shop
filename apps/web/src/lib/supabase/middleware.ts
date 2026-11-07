@@ -6,6 +6,7 @@ import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 const PROTECTED = [
   { prefix: "/admin", login: "/admin/login", open: ["/admin/login"] },
   { prefix: "/account", login: "/account/login", open: ["/account/login", "/account/callback"] },
+  { prefix: "/checkout", login: "/account/login", open: [] as string[] },
 ];
 
 // Refreshes the Supabase session cookie and sends signed-out visitors of the
@@ -43,7 +44,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && area && !area.open.includes(pathname)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = area.login;
-    loginUrl.search = area.prefix === "/account" ? `?next=${encodeURIComponent(pathname + search)}` : "";
+    loginUrl.search = area.login === "/account/login" ? `?next=${encodeURIComponent(pathname + search)}` : "";
     return NextResponse.redirect(loginUrl);
   }
 

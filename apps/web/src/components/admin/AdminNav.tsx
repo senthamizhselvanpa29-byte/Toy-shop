@@ -14,7 +14,7 @@ const items: NavItem[] = [
   { label: "Orders", icon: "📦" },
   { label: "Customers", icon: "👨‍👩‍👧" },
   { label: "Coupons", icon: "🎟️" },
-  { label: "Settings", icon: "⚙️" },
+  { label: "Settings", icon: "⚙️", href: "/admin/settings" },
 ];
 
 export function AdminNav() {

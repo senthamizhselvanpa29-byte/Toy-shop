@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AGE_GROUPS, formatPaise } from "@toyshop/shared";
 import { ProductGallery } from "@/components/shop/ProductGallery";
+import { AddToCart } from "@/components/cart/AddToCart";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { WishlistButton } from "@/components/shop/WishlistButton";
-import { AgeBadge, Badge, Button, Card, PriceTag, type ThemeColor } from "@/components/ui";
+import { AgeBadge, Badge, Card, PriceTag, type ThemeColor } from "@/components/ui";
 import { getProductBySlug, getRelatedProducts } from "@/lib/shop";
 
 export const revalidate = 60;
@@ -105,11 +106,9 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           <Card className="flex flex-col gap-3 border-sunshine-dark/40">
-            <Button size="lg" disabled className="w-full">
-              {outOfStock ? "Sold out" : "Add to cart 🛒"}
-            </Button>
+            <AddToCart productId={product.id} stock={product.stock} />
             <p className="text-center text-sm text-ink-soft">
-              🛍️ Online ordering opens very soon — with UPI, cards and cash on delivery.
+              🔒 Secure checkout · UPI, cards, net banking or cash on delivery
             </p>
             <WishlistButton productId={product.id} productName={product.name} variant="full" />
           </Card>

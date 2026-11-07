@@ -38,7 +38,20 @@ const EMPTY: AddressFormInput = {
   isDefault: false,
 };
 
-export function AddressBook({ addresses, defaultName, defaultPhone }: { addresses: Address[]; defaultName: string; defaultPhone: string }) {
+export function AddressBook({
+  addresses,
+  defaultName,
+  defaultPhone,
+  compact = false,
+  addLabel = "➕ Add an address",
+}: {
+  addresses: Address[];
+  defaultName: string;
+  defaultPhone: string;
+  // Only the "add address" button and form (used at checkout).
+  compact?: boolean;
+  addLabel?: string;
+}) {
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -57,7 +70,7 @@ export function AddressBook({ addresses, defaultName, defaultPhone }: { addresse
 
   return (
     <div className="flex flex-col gap-4">
-      {addresses.length === 0 && editing !== "new" && (
+      {!compact && addresses.length === 0 && editing !== "new" && (
         <TobySays title="No addresses yet">Add one now and checkout will be super quick later.</TobySays>
       )}
 
@@ -122,8 +135,8 @@ export function AddressBook({ addresses, defaultName, defaultPhone }: { addresse
           onDone={() => setEditing(null)}
         />
       ) : (
-        <Button className="self-start" onClick={() => setEditing("new")}>
-          ➕ Add an address
+        <Button className="self-start" variant={compact ? "secondary" : "primary"} onClick={() => setEditing("new")}>
+          {addLabel}
         </Button>
       )}
     </div>
