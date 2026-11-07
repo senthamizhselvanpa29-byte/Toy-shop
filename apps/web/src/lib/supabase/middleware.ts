@@ -7,6 +7,7 @@ const PROTECTED = [
   { prefix: "/admin", login: "/admin/login", open: ["/admin/login"] },
   { prefix: "/account", login: "/account/login", open: ["/account/login", "/account/callback"] },
   { prefix: "/checkout", login: "/account/login", open: [] as string[] },
+  { prefix: "/invoice", login: "/account/login", open: [] as string[] },
 ];
 
 // Refreshes the Supabase session cookie and sends signed-out visitors of the

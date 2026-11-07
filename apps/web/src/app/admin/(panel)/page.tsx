@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPaise } from "@toyshop/shared";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { buttonClasses, Card } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
@@ -21,7 +22,7 @@ export default async function AdminDashboard({
 }) {
   const { demoRemoved } = await searchParams;
   const supabase = await createClient();
-  const [viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }] =
+  const [viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }, { data: orderRows }] =
     await Promise.all([
       getViewer(),
       countProducts(),
@@ -36,12 +37,29 @@ export default async function AdminDashboard({
         .lte("stock", 5)
         .then(({ count }) => count ?? 0),
       supabase.from("categories").select("id", { count: "exact", head: true }),
+      supabase
+        .from("orders")
+        .select("status, return_status, total_paise, placed_at")
+        .not("placed_at", "is", null)
+        .order("placed_at", { ascending: false })
+        .limit(5000),
     ]);
+
+  // "Today" in India, whatever time zone the server runs in.
+  const indianDate = (value: string | Date) => new Date(value).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const today = indianDate(new Date());
+  const orders = (orderRows ?? []) as { status: string; return_status: string; total_paise: number; placed_at: string }[];
+  const toPack = orders.filter((order) => order.status === "placed").length;
+  const openReturns = orders.filter((order) => ["requested", "approved"].includes(order.return_status)).length;
+  const todaysOrders = orders.filter((order) => order.status !== "cancelled" && indianDate(order.placed_at) === today);
+  const todaysSales = todaysOrders.reduce((sum, order) => sum + order.total_paise, 0);
 
   const name =
     viewer.status === "owner" && viewer.fullName ? viewer.fullName : "Shop Owner";
 
-  const stats = [
+  const stats: { label: string; value: string | number; icon: string; href?: string }[] = [
+    { label: "Orders to pack", value: toPack, icon: "📥", href: "/admin/orders?tab=placed" },
+    { label: `Today's sales (${todaysOrders.length} order${todaysOrders.length === 1 ? "" : "s"})`, value: formatPaise(todaysSales), icon: "💰", href: "/admin/orders?tab=all" },
     { label: "Toys in your shop", value: liveProducts, icon: "🟢" },
     { label: "All toys (incl. drafts)", value: totalProducts, icon: "🧸" },
     { label: "Running low (5 or less)", value: lowStock, icon: "⚠️" },
@@ -54,7 +72,7 @@ export default async function AdminDashboard({
     { done: ownProducts > 0, label: "Add your first toy with photos", href: "/admin/products/new" },
     { done: ownLive > 0, label: "Publish a toy to the shop", href: "/admin/products" },
     { done: ownProducts > 0 && demoProducts === 0, label: "Replace the demo toys with your own" },
-    { done: false, label: "Take your first order", when: "Milestone 9" },
+    { done: orders.length > 0, label: "Take your first order", href: "/admin/orders" },
   ];
 
   return (
@@ -77,6 +95,12 @@ export default async function AdminDashboard({
         </p>
       )}
 
+      {openReturns > 0 && (
+        <Link href="/admin/orders?tab=returns" className="rounded-2xl bg-orange/20 px-4 py-3 font-bold hover:bg-orange/30">
+          ↩️ {openReturns} return request{openReturns === 1 ? "" : "s"} waiting for you →
+        </Link>
+      )}
+
       {demoProducts > 0 && (
         <Card className="flex flex-col gap-4 border-grape/40 bg-grape/10 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -97,9 +121,9 @@ export default async function AdminDashboard({
         </Card>
       )}
 
-      <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <li key={stat.label}>
+      <ul className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        {stats.map((stat) => {
+          const card = (
             <Card className="flex h-full flex-col gap-1 p-4">
               <span className="text-2xl" aria-hidden>
                 {stat.icon}
@@ -107,8 +131,19 @@ export default async function AdminDashboard({
               <span className="font-heading text-3xl">{stat.value}</span>
               <span className="text-sm text-ink-soft">{stat.label}</span>
             </Card>
-          </li>
-        ))}
+          );
+          return (
+            <li key={stat.label}>
+              {stat.href ? (
+                <Link href={stat.href} className="block h-full rounded-bubble transition hover:-translate-y-0.5">
+                  {card}
+                </Link>
+              ) : (
+                card
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <Card>
@@ -132,11 +167,6 @@ export default async function AdminDashboard({
                 </Link>
               ) : (
                 <span className={step.done ? "line-through text-ink-soft" : ""}>{step.label}</span>
-              )}
-              {step.when && (
-                <span className="ml-auto shrink-0 whitespace-nowrap rounded-full bg-ink/5 px-3 py-0.5 text-sm text-ink-soft">
-                  {step.when}
-                </span>
               )}
               <span className="sr-only">{step.done ? "(done)" : "(to do)"}</span>
             </li>

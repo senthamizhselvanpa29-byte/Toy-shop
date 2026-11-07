@@ -7,10 +7,13 @@ import {
   formatPaise,
   ORDER_PROGRESS,
   ORDER_STATUS_LABELS,
+  RETURN_STATUS_LABELS,
   type OrderStatus,
+  type ReturnStatus,
 } from "@toyshop/shared";
+import { CustomerOrderActions } from "@/components/account/CustomerOrderActions";
 import { PayNowButton } from "@/components/cart/PayNowButton";
-import { Card } from "@/components/ui";
+import { buttonClasses, Card } from "@/components/ui";
 import { productImageUrl } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { createClient } from "@/lib/supabase/server";
@@ -38,6 +41,19 @@ type Order = {
   ship_state: string;
   ship_pincode: string;
   created_at: string;
+  placed_at: string | null;
+  packed_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  cancelled_by: "customer" | "owner" | null;
+  cancel_reason: string;
+  courier_name: string;
+  tracking_number: string;
+  tracking_url: string;
+  return_status: ReturnStatus;
+  refund_paise: number | null;
+  refunded_at: string | null;
   order_items: {
     id: string;
     name: string;
@@ -66,18 +82,35 @@ export default async function OrderPage({
   } = await supabase.auth.getUser();
   if (!user) redirect(`/account/login?next=/account/orders/${id}`);
 
-  const { data } = await supabase
-    .from("orders")
-    .select("*, order_items(id, name, slug, image_path, unit_price_paise, quantity, line_total_paise)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const [{ data }, { data: shop }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("*, order_items(id, name, slug, image_path, unit_price_paise, quantity, line_total_paise)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase.from("shop_settings").select("return_days").eq("id", 1).maybeSingle(),
+  ]);
   if (!data) notFound();
   const order = data as Order;
 
   const waitingForPayment = order.status === "pending_payment";
   const status = ORDER_STATUS_LABELS[order.status];
   const step = ORDER_PROGRESS.indexOf(order.status);
+  const stepDates: Record<string, string | null> = {
+    placed: order.placed_at,
+    packed: order.packed_at,
+    shipped: order.shipped_at,
+    delivered: order.delivered_at,
+  };
+  const shortDate = (value: string | null) =>
+    value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "";
+  const returnDays = shop?.return_days ?? 7;
+  const returnOpen =
+    order.status === "delivered" &&
+    order.return_status === "none" &&
+    Boolean(order.delivered_at) &&
+    Date.now() < new Date(order.delivered_at!).getTime() + returnDays * 24 * 60 * 60 * 1000;
 
   return (
     <div className="flex flex-col gap-6 py-8">
@@ -86,9 +119,16 @@ export default async function OrderPage({
           ← My orders
         </Link>
         <h1 className="mt-1 text-3xl sm:text-4xl">Order {order.order_number}</h1>
-        <p className="text-ink-soft">
-          Placed on {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-ink-soft">
+            Placed on {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+          </p>
+          {order.placed_at && (
+            <Link href={`/invoice/${order.id}`} target="_blank" className={buttonClasses("ghost", "sm")}>
+              🧾 Invoice
+            </Link>
+          )}
+        </div>
       </div>
 
       {placed && !waitingForPayment && (
@@ -129,16 +169,53 @@ export default async function OrderPage({
                   {ORDER_STATUS_LABELS[item].icon}
                 </span>
                 <span className={index <= step ? "font-bold" : "text-ink-soft"}>{ORDER_STATUS_LABELS[item].label}</span>
+                <span className="text-xs text-ink-soft">{shortDate(stepDates[item])}</span>
               </li>
             ))}
           </ol>
         </Card>
       )}
+      {(order.status === "shipped" || order.status === "delivered") && (order.courier_name || order.tracking_number) && (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <p>
+            🚚 Sent with <strong>{order.courier_name || "our courier"}</strong>
+            {order.tracking_number && (
+              <>
+                {" · "}Tracking number <strong>{order.tracking_number}</strong>
+              </>
+            )}
+          </p>
+          {order.tracking_url && (
+            <a href={order.tracking_url} target="_blank" rel="noreferrer" className={buttonClasses("secondary", "sm")}>
+              Track parcel →
+            </a>
+          )}
+        </Card>
+      )}
       {order.status === "cancelled" && (
-        <p className="rounded-2xl bg-ink/10 px-4 py-3 font-bold">
-          {status.icon} This order was cancelled.
+        <div className="rounded-2xl bg-ink/10 px-4 py-3">
+          <p className="font-bold">
+            {status.icon} This order was cancelled{order.cancelled_by === "owner" ? " by the shop" : ""}.
+            {order.cancel_reason && ` Reason: ${order.cancel_reason}`}
+          </p>
+          {order.refund_paise ? (
+            <p>💸 {formatPaise(order.refund_paise)} refunded{order.payment_method === "razorpay" ? " to your original payment method (usually 5–7 working days)." : "."}</p>
+          ) : null}
+        </div>
+      )}
+      {order.return_status !== "none" && (
+        <p className="rounded-2xl bg-orange/20 px-4 py-3 font-bold">
+          ↩️ {RETURN_STATUS_LABELS[order.return_status]}
+          {order.return_status === "returned" && order.refund_paise ? ` — ${formatPaise(order.refund_paise)} refunded.` : ""}
         </p>
       )}
+      <CustomerOrderActions
+        orderId={order.id}
+        canCancel={order.status === "placed"}
+        canReturn={returnOpen}
+        returnDays={returnDays}
+        paidOnline={order.payment_method === "razorpay" && order.payment_status === "paid"}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-4">

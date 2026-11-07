@@ -8,7 +8,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const settings = await getShopSettings(supabase);
+  const [settings, { data: business }] = await Promise.all([
+    getShopSettings(supabase),
+    supabase
+      .from("shop_settings")
+      .select("business_name, business_address, business_state, business_phone, business_email, gstin, return_days")
+      .eq("id", 1)
+      .maybeSingle(),
+  ]);
   const razorpayMode = process.env.RAZORPAY_KEY_ID?.startsWith("rzp_live_") ? "live" : "test";
 
   const checks = [
@@ -65,6 +72,13 @@ export default async function SettingsPage() {
           freeDeliveryAbove: paiseToRupeesInput(settings.freeDeliveryAbovePaise),
           codEnabled: settings.codEnabled,
           codMax: paiseToRupeesInput(settings.codMaxPaise),
+          businessName: business?.business_name ?? "Toy Shop",
+          businessAddress: business?.business_address ?? "",
+          businessState: business?.business_state ?? "Tamil Nadu",
+          businessPhone: business?.business_phone ?? "",
+          businessEmail: business?.business_email ?? "",
+          gstin: business?.gstin ?? "",
+          returnDays: String(business?.return_days ?? 7),
         }}
       />
     </div>
