@@ -1,5 +1,6 @@
 import "server-only";
-import { AGE_GROUPS, LOCALE_TAGS, MESSAGES, translate, type Locale } from "@toyshop/shared";
+import { AGE_GROUPS, LOCALE_TAGS, translate, type Locale } from "@toyshop/shared";
+import { MESSAGES } from "@toyshop/shared/messages";
 import type { CardLabels } from "@/components/ui";
 
 export type Translator = ((key: string, vars?: Record<string, string | number>) => string) & {

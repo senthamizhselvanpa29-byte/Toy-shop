@@ -31,7 +31,7 @@ export default async function EditProductPage({
       .select("id, storage_path, alt_text, position")
       .eq("product_id", id)
       .order("position"),
-    supabase.from("categories").select("id, name, slug, icon, color, position, translations").order("position"),
+    supabase.from("categories").select("*").order("position"),
   ]);
   if (!product) notFound();
 

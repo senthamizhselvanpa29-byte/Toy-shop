@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function CategoriesPage() {
   const supabase = await createClient();
   const [{ data: categories }, { data: products }] = await Promise.all([
-    supabase.from("categories").select("id, name, slug, icon, color, position, translations").order("position").order("name"),
+    supabase.from("categories").select("*").order("position").order("name"),
     supabase.from("products").select("category_id"),
   ]);
 

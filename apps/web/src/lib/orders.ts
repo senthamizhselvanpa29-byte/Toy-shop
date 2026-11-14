@@ -67,29 +67,29 @@ export async function quoteCart(supabase: SupabaseClient, cart: CartLine[], loca
   }
 
   const ids = [...wanted.keys()];
-  const [settings, { data }] = await Promise.all([
-    getShopSettings(supabase),
-    ids.length
-      ? supabase
-          .from("products")
-          .select("id, name, slug, translations, price_paise, mrp_paise, gst_rate, stock, status, product_images(storage_path, position)")
-          .in("id", ids)
-          .eq("status", "published")
-      : Promise.resolve({ data: [] as never[] }),
-  ]);
+  const fields = "id, name, slug, translations, price_paise, mrp_paise, gst_rate, stock, status, product_images(storage_path, position)";
+  const readProducts = async () => {
+    if (!ids.length) return [];
+    const read = (select: string) => supabase.from("products").select(select).in("id", ids).eq("status", "published");
+    let { data, error } = await read(fields);
+    // Before 0007_translations.sql has been run there are no Tamil/Hindi words yet.
+    if (error?.code === "42703") ({ data, error } = await read(fields.replace(", translations", "")));
+    return data ?? [];
+  };
+  const [settings, data] = await Promise.all([getShopSettings(supabase), readProducts()]);
 
   type Row = {
     id: string;
     name: string;
     slug: string;
-    translations: ContentTranslations | null;
+    translations?: ContentTranslations | null;
     price_paise: number;
     mrp_paise: number | null;
     gst_rate: number;
     stock: number;
     product_images: { storage_path: string; position: number }[];
   };
-  const byId = new Map(((data ?? []) as Row[]).map((row) => [row.id, row]));
+  const byId = new Map((data as unknown as Row[]).map((row) => [row.id, row]));
 
   const lines: QuoteLine[] = ids.map((id) => {
     const requested = wanted.get(id)!;

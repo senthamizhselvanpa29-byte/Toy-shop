@@ -9,6 +9,7 @@ import {
   type CategoryFormInput,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { databaseUpdateMessage, isMissingColumn } from "@/lib/dbUpdates";
 import { refreshCatalog } from "@/lib/revalidate";
 
 export type CategoryResult = { errors?: Record<string, string> };
@@ -31,6 +32,7 @@ export async function saveCategory(
 
   if (categoryId) {
     const { error } = await supabase.from("categories").update(row).eq("id", categoryId);
+    if (isMissingColumn(error)) return { errors: { form: databaseUpdateMessage("0007_translations.sql") } };
     if (error) return { errors: { form: "Couldn't save the category. Please try again." } };
   } else {
     const { data: last } = await supabase
@@ -45,6 +47,7 @@ export async function saveCategory(
       slug: `${base}-${Math.random().toString(36).slice(2, 6)}`,
       position: (last?.position ?? 0) + 1,
     });
+    if (isMissingColumn(error)) return { errors: { form: databaseUpdateMessage("0007_translations.sql") } };
     if (error) return { errors: { form: "Couldn't add the category. Please try again." } };
   }
 

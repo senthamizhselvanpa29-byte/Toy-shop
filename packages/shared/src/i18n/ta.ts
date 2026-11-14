@@ -3,6 +3,8 @@ import type { MessageKey } from "./en";
 // தமிழ் — Tamil words for every customer screen. Keep the {placeholders}
 // exactly as they are; the app fills them in.
 export const ta: Record<MessageKey, string> = {
+  "meta.description": "மகிழ்ச்சியான குழந்தைகளுக்கு மகிழ்ச்சியான பொம்மைகள் — இந்தியா முழுவதும் ஆன்லைனில் வாங்குங்கள்.",
+
   "lang.choose": "மொழியைத் தேர்ந்தெடுக்கவும்",
 
   "header.home": "Toy Shop முகப்பு",

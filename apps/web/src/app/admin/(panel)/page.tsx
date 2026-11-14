@@ -3,6 +3,7 @@ import { formatPaise } from "@toyshop/shared";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { buttonClasses, Card } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
+import { missingDatabaseUpdates } from "@/lib/dbUpdates";
 import { createClient } from "@/lib/supabase/server";
 import { deleteDemoProducts } from "./products/actions";
 
@@ -22,8 +23,9 @@ export default async function AdminDashboard({
 }) {
   const { demoRemoved } = await searchParams;
   const supabase = await createClient();
-  const [viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }, { data: orderRows }] =
+  const [missingUpdates, viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }, { data: orderRows }] =
     await Promise.all([
+      missingDatabaseUpdates(supabase),
       getViewer(),
       countProducts(),
       countProducts({ status: "published" }),
@@ -88,6 +90,27 @@ export default async function AdminDashboard({
           ➕ Add a toy
         </Link>
       </div>
+
+      {missingUpdates.length > 0 && (
+        <Card role="alert" className="flex flex-col gap-2 border-bubblegum-dark/40 bg-bubblegum/15">
+          <h2 className="text-xl">🛠️ One more step: your database needs an update</h2>
+          <p>
+            Open <strong>Supabase → SQL Editor</strong>, then paste and run{" "}
+            {missingUpdates.length === 1 ? "this file" : "these files, in this order"} from the{" "}
+            <code>supabase/migrations</code> folder:
+          </p>
+          <ol className="list-decimal pl-6 font-bold">
+            {missingUpdates.map((file) => (
+              <li key={file}>
+                <code>{file}</code>
+              </li>
+            ))}
+          </ol>
+          <p className="text-sm text-ink-soft">
+            Until then some newer features (order management, Tamil and Hindi words) can&apos;t be saved.
+          </p>
+        </Card>
+      )}
 
       {demoRemoved && (
         <p role="status" className="rounded-2xl bg-mint/25 px-4 py-3 font-bold text-mint-dark">

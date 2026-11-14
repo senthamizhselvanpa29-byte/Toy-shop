@@ -15,6 +15,7 @@ import {
   type ProductTranslations,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { databaseUpdateMessage, isMissingColumn } from "@/lib/dbUpdates";
 import { AutoTranslateError, isAutoTranslateConfigured, translateToTamilAndHindi } from "@/lib/autoTranslate";
 import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
 import { refreshCatalog } from "@/lib/revalidate";
@@ -117,6 +118,7 @@ export async function saveProduct(
   }
 
   if (error || !id) {
+    if (isMissingColumn(error)) return { errors: { form: databaseUpdateMessage("0007_translations.sql") } };
     if (error?.code === UNIQUE_VIOLATION && error.message.includes("sku")) {
       return { errors: { sku: "Another toy already uses this SKU" } };
     }
@@ -199,7 +201,7 @@ export async function duplicateProduct(productId: string) {
     gst_rate: product.gst_rate,
     weight_grams: product.weight_grams,
     bis_license: product.bis_license,
-    translations: product.translations ?? {},
+    ...(product.translations ? { translations: product.translations } : {}),
     name,
     sku: null,
     status: "draft",

@@ -2,6 +2,9 @@
 // must have the same keys — TypeScript checks this.
 // "{name}" style parts are filled in by the app (a number, a price, a name…).
 export const en = {
+  // Shown by search engines and when a link is shared
+  "meta.description": "Happy toys for happy kids — shop online across India.",
+
   // Language switcher
   "lang.choose": "Choose language",
 

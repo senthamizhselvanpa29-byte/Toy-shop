@@ -3,6 +3,8 @@ import type { MessageKey } from "./en";
 // हिंदी — Hindi words for every customer screen. Keep the {placeholders}
 // exactly as they are; the app fills them in.
 export const hi: Record<MessageKey, string> = {
+  "meta.description": "ख़ुश बच्चों के लिए ख़ुशियों भरे खिलौने — पूरे भारत में ऑनलाइन ख़रीदें।",
+
   "lang.choose": "भाषा चुनें",
 
   "header.home": "Toy Shop होम",

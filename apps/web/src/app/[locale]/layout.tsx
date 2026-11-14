@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { MESSAGES } from "@toyshop/shared";
+import { MESSAGES } from "@toyshop/shared/messages";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { CustomerProvider } from "@/components/shop/CustomerProvider";
@@ -17,6 +18,11 @@ import { indicFontClass } from "./fonts";
 // after a deploy from getting a page. Unknown languages are refused below.)
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return isLocale(locale) ? { description: getT(locale)("meta.description") } : {};
 }
 
 export default async function ShopLayout({

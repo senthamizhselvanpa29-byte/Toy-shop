@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MESSAGES, translate } from "@toyshop/shared";
+import { translate } from "@toyshop/shared";
+import { en } from "@toyshop/shared/messages/en";
 import {
   advanceOrder,
   cancelOrderAsOwner,
@@ -40,7 +41,7 @@ export function OrderActions(props: Props) {
     startTransition(async () => {
       const result = await action();
       // Shared order messages come as keys; the owner area is in English.
-      const english = (text: string) => translate(MESSAGES.en, text, result.vars);
+      const english = (text: string) => translate(en, text, result.vars);
       if (result.error) setMessage({ kind: "error", text: english(result.error) });
       else setMessage({ kind: "ok", text: english(result.notice ?? success) });
     });

@@ -80,6 +80,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Every page, but not Next.js internals or files such as images.
-  matcher: ["/((?!_next/|.*\\..*).*)"],
+  // Every page, but not Next.js or Vercel internals, or files such as images.
+  matcher: ["/((?!_next/|_vercel/|.*\\..*).*)"],
 };

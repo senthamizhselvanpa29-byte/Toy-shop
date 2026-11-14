@@ -1,6 +1,7 @@
-import { en, type MessageKey } from "./en";
-import { hi } from "./hi";
-import { ta } from "./ta";
+// Language helpers that are safe to load in the browser. The word lists
+// themselves live in ./messages (import "@toyshop/shared/messages") so that
+// pages don't download all three languages.
+import type { MessageKey } from "./en";
 
 export const LOCALES = ["en", "ta", "hi"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -9,8 +10,6 @@ export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_NAMES: Record<Locale, string> = { en: "English", ta: "தமிழ்", hi: "हिंदी" };
 // For dates and numbers (Intl).
 export const LOCALE_TAGS: Record<Locale, string> = { en: "en-IN", ta: "ta-IN", hi: "hi-IN" };
-
-export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, ta, hi };
 
 export type { MessageKey };
 
