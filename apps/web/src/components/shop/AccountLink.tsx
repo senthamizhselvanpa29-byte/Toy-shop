@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { CartLink } from "@/components/cart/CartLink";
+import { useT } from "@/components/i18n/I18nProvider";
 import { useCustomer } from "./CustomerProvider";
 
 export function AccountLink() {
   const { ready, signedIn, wishlist } = useCustomer();
+  const { t } = useT();
 
   return (
     <div className="flex items-center gap-1">
       <Link
         href="/account/wishlist"
         className="relative flex size-10 items-center justify-center rounded-full text-xl hover:bg-ink/5"
-        aria-label={`Wishlist${wishlist.size ? ` (${wishlist.size})` : ""}`}
+        aria-label={`${t("header.wishlist")}${wishlist.size ? ` (${wishlist.size})` : ""}`}
       >
         <span aria-hidden>❤️</span>
         {wishlist.size > 0 && (
@@ -27,7 +29,7 @@ export function AccountLink() {
         className="flex items-center gap-1.5 rounded-full px-3 py-2 font-bold hover:bg-ink/5"
       >
         <span aria-hidden>👤</span>
-        <span className={ready ? "" : "opacity-0"}>{signedIn ? "Account" : "Log in"}</span>
+        <span className={ready ? "" : "opacity-0"}>{signedIn ? t("header.account") : t("header.login")}</span>
       </Link>
     </div>
   );

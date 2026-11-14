@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AGE_GROUPS } from "@toyshop/shared";
-import type { Category } from "@/lib/catalog";
+import type { Translator } from "@/lib/i18n";
+import type { ShopCategory } from "@/lib/shop";
 
-export function ShopFooter({ categories }: { categories: Category[] }) {
+export function ShopFooter({ categories, t }: { categories: ShopCategory[]; t: Translator }) {
   return (
     <footer className="mt-16 bg-ink text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -12,10 +13,10 @@ export function ShopFooter({ categories }: { categories: Category[] }) {
             <span aria-hidden>🧸</span> Toy Shop
           </p>
           <p className="mt-2 text-white/75">
-            Happy toys for happy kids, delivered across India.
+            {t("footer.tagline")}
           </p>
         </div>
-        <FooterList title="Shop by category">
+        <FooterList title={t("home.byCategory")}>
           {categories.slice(0, 8).map((category) => (
             <li key={category.id}>
               <Link href={`/toys?category=${category.slug}`} className="hover:underline">
@@ -24,26 +25,30 @@ export function ShopFooter({ categories }: { categories: Category[] }) {
             </li>
           ))}
         </FooterList>
-        <FooterList title="Shop by age">
+        <FooterList title={t("home.byAge")}>
           {AGE_GROUPS.map((group) => (
             <li key={group.id}>
               <Link href={`/toys?age=${encodeURIComponent(group.id)}`} className="hover:underline">
-                {group.label}
+                {t(`age.${group.id}`)}
               </Link>
             </li>
           ))}
         </FooterList>
-        <FooterList title="Help">
+        <FooterList title={t("footer.help")}>
           <li>
             <Link href="/toys" className="hover:underline">
-              All toys
+              {t("header.allToys")}
             </Link>
           </li>
-          <li className="text-white/75">Orders, delivery and returns information is coming soon.</li>
+          <li>
+            <Link href="/account/orders" className="hover:underline">
+              {t("footer.myOrders")}
+            </Link>
+          </li>
         </FooterList>
       </div>
       <p className="border-t border-white/10 px-4 py-4 text-center text-sm text-white/60">
-        © {new Date().getFullYear()} Toy Shop · Prices include GST
+        © {new Date().getFullYear()} Toy Shop · {t("footer.gst")}
       </p>
     </footer>
   );

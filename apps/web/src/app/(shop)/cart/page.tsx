@@ -6,16 +6,18 @@ import { formatPaise, MAX_QTY_PER_TOY } from "@toyshop/shared";
 import { QuantityStepper } from "@/components/cart/AddToCart";
 import { OrderSummary } from "@/components/cart/OrderSummary";
 import { useQuote } from "@/components/cart/useQuote";
+import { useT } from "@/components/i18n/I18nProvider";
 import { buttonClasses, Card, TobyLoader, TobySays } from "@/components/ui";
 
 export default function CartPage() {
   const { quote, loading, notices, cart } = useQuote();
+  const { t } = useT();
   const lines = quote?.lines.filter((line) => line.quantity > 0) ?? [];
 
   if (!cart.ready || (loading && !quote)) {
     return (
       <div className="flex justify-center py-20">
-        <TobyLoader label="Opening your cart…" />
+        <TobyLoader label={t("cart.opening")} />
       </div>
     );
   }
@@ -29,14 +31,14 @@ export default function CartPage() {
           </p>
         ))}
         <TobySays
-          title="Your cart is empty"
+          title={t("cart.emptyTitle")}
           action={
             <Link href="/toys" className={buttonClasses("primary", "lg")}>
-              Find some toys 🧸
+              {t("cart.findToys")} 🧸
             </Link>
           }
         >
-          Toby is waiting to fill it with fun!
+          {t("cart.emptyText")}
         </TobySays>
       </div>
     );
@@ -44,7 +46,7 @@ export default function CartPage() {
 
   return (
     <div className="flex flex-col gap-6 py-8">
-      <h1 className="text-3xl sm:text-4xl">🛒 Your cart</h1>
+      <h1 className="text-3xl sm:text-4xl">🛒 {t("cart.title")}</h1>
 
       {notices.map((notice) => (
         <p key={notice} role="status" className="rounded-2xl bg-sunshine/30 px-4 py-3 font-bold">
@@ -62,14 +64,14 @@ export default function CartPage() {
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link href={`/toys/${line.slug}`} className="font-heading text-lg hover:underline">
-                    {line.name}
+                    {line.displayName}
                   </Link>
-                  <p className="text-sm text-ink-soft">{formatPaise(line.unitPricePaise)} each</p>
-                  {line.stock <= 5 && <p className="text-sm font-bold text-orange-dark">Only {line.stock} left</p>}
+                  <p className="text-sm text-ink-soft">{t("cart.each", { price: formatPaise(line.unitPricePaise) })}</p>
+                  {line.stock <= 5 && <p className="text-sm font-bold text-orange-dark">{t("cart.onlyLeft", { count: line.stock })}</p>}
                 </div>
                 <div className="flex w-full items-center justify-between gap-4 sm:w-auto">
                   <QuantityStepper
-                    label={`Quantity of ${line.name}`}
+                    label={t("cart.quantityOf", { name: line.displayName })}
                     value={line.quantity}
                     max={Math.min(line.stock, MAX_QTY_PER_TOY)}
                     onChange={(quantity) => cart.setQuantity(line.productId, quantity)}
@@ -78,7 +80,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => cart.remove(line.productId)}
-                    aria-label={`Remove ${line.name} from cart`}
+                    aria-label={t("cart.removeNamed", { name: line.displayName })}
                     className="flex size-10 items-center justify-center rounded-full hover:bg-ink/10"
                   >
                     🗑️
@@ -92,17 +94,17 @@ export default function CartPage() {
         {quote && (
           <aside className="lg:sticky lg:top-40 lg:self-start">
             <Card className="flex flex-col gap-4">
-              <h2 className="text-2xl">Order summary</h2>
-              <OrderSummary quote={quote} />
+              <h2 className="text-2xl">{t("cart.summary")}</h2>
+              <OrderSummary quote={quote} t={t} />
               <Link
                 href="/checkout"
                 aria-disabled={loading}
                 className={buttonClasses("primary", "lg") + (loading ? " pointer-events-none opacity-60" : "")}
               >
-                Checkout securely 🔒
+                {t("cart.checkout")} 🔒
               </Link>
               <Link href="/toys" className="text-center text-sm font-bold text-sky-dark hover:underline">
-                ← Keep shopping
+                ← {t("cart.keepShopping")}
               </Link>
             </Card>
           </aside>

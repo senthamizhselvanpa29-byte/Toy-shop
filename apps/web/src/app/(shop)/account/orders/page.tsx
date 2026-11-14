@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatPaise, ORDER_STATUS_LABELS, type OrderStatus } from "@toyshop/shared";
 import { Badge, buttonClasses, Card, TobySays } from "@/components/ui";
+import { getT } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ const statusColor = {
 } as const;
 
 export default async function OrdersPage() {
+  const t = await getT();
   const supabase = await createClient();
   const {
     data: { user },
@@ -44,20 +46,20 @@ export default async function OrdersPage() {
     <div className="flex flex-col gap-6 py-8">
       <div>
         <Link href="/account" className="text-sm font-bold text-sky-dark">
-          ← My account
+          ← {t("account.title")}
         </Link>
-        <h1 className="mt-1 text-3xl sm:text-4xl">📦 My orders</h1>
+        <h1 className="mt-1 text-3xl sm:text-4xl">📦 {t("account.orders")}</h1>
       </div>
       {orders.length === 0 ? (
         <TobySays
-          title="No orders yet"
+          title={t("orders.noneTitle")}
           action={
             <Link href="/toys" className={buttonClasses("primary", "lg")}>
-              Start shopping 🧸
+              {t("orders.startShopping")} 🧸
             </Link>
           }
         >
-          Your orders will show up here.
+          {t("orders.noneText")}
         </TobySays>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -69,16 +71,16 @@ export default async function OrdersPage() {
                 <Link href={`/account/orders/${order.id}`} className="block rounded-bubble transition hover:-translate-y-0.5">
                   <Card className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-heading text-xl">Order {order.order_number}</p>
+                      <p className="font-heading text-xl">{t("order.title", { number: order.order_number })}</p>
                       <p className="text-sm text-ink-soft">
-                        {new Date(order.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        {new Date(order.created_at).toLocaleDateString(t.tag, { day: "numeric", month: "short", year: "numeric" })}
                         {" · "}
-                        {count} {count === 1 ? "toy" : "toys"}
+                        {t(count === 1 ? "toys.countOne" : "toys.count", { count })}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge color={statusColor[order.status]}>
-                        {status.icon} {status.label}
+                        {status.icon} {t(`status.${order.status}`)}
                       </Badge>
                       <span className="font-heading text-xl">{formatPaise(order.total_paise)}</span>
                     </div>

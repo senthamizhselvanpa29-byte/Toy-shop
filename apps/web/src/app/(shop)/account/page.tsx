@@ -6,12 +6,14 @@ import { AddressBook, type Address } from "@/components/account/AddressBook";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { Card } from "@/components/ui";
+import { getT } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My account · Toy Shop", robots: { index: false } };
 
 export default async function AccountPage() {
+  const t = await getT();
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,8 +43,10 @@ export default async function AccountPage() {
     <div className="flex flex-col gap-8 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl">Hi{name ? `, ${name.split(" ")[0]}` : ""}! 👋</h1>
-          <p className="text-ink-soft">Logged in as {loginId}</p>
+          <h1 className="text-3xl sm:text-4xl">
+            {name ? t("account.hiNamed", { name: name.split(" ")[0] }) : t("account.hi")} 👋
+          </h1>
+          <p className="text-ink-soft">{t("account.loggedInAs", { id: loginId })}</p>
         </div>
         <LogoutButton />
       </div>
@@ -50,23 +54,23 @@ export default async function AccountPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link href="/account/wishlist" className="rounded-bubble bg-bubblegum p-5 shadow-soft transition hover:-translate-y-1">
           <span className="text-3xl" aria-hidden>❤️</span>
-          <p className="font-heading text-xl">My wishlist</p>
-          <p className="text-sm">{wishlistCount ?? 0} saved toy(s)</p>
+          <p className="font-heading text-xl">{t("account.wishlist")}</p>
+          <p className="text-sm">{t("account.savedCount", { count: wishlistCount ?? 0 })}</p>
         </Link>
         <Link href="/account/orders" className="rounded-bubble bg-sky p-5 shadow-soft transition hover:-translate-y-1">
           <span className="text-3xl" aria-hidden>📦</span>
-          <p className="font-heading text-xl">My orders</p>
-          <p className="text-sm">{orderCount ?? 0} order(s) · track and pay</p>
+          <p className="font-heading text-xl">{t("account.orders")}</p>
+          <p className="text-sm">{t("account.orderCount", { count: orderCount ?? 0 })}</p>
         </Link>
       </div>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-2xl">Your details</h2>
+        <h2 className="text-2xl">{t("account.details")}</h2>
         <ProfileForm fullName={name} phone={profile?.phone ? profile.phone.replace(/^\+91/, "") : ""} />
       </Card>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl">📍 Delivery addresses</h2>
+        <h2 className="text-2xl">📍 {t("account.addresses")}</h2>
         <AddressBook addresses={(addresses ?? []) as Address[]} defaultName={name} defaultPhone={profile?.phone ?? ""} />
       </section>
     </div>

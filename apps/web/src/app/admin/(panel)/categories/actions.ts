@@ -1,15 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { categoryFormSchema, fieldErrors, slugify, type CategoryFormInput } from "@toyshop/shared";
+import {
+  categoryFormSchema,
+  categoryTranslationsToRow,
+  fieldErrors,
+  slugify,
+  type CategoryFormInput,
+} from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { refreshCatalog } from "@/lib/revalidate";
 
 export type CategoryResult = { errors?: Record<string, string> };
 
 function refresh() {
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
-  revalidatePath("/", "layout");
+  refreshCatalog();
 }
 
 export async function saveCategory(
@@ -19,9 +26,11 @@ export async function saveCategory(
   const { supabase } = await requireOwner();
   const parsed = categoryFormSchema.safeParse(input);
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  const { name, icon, color, translations } = parsed.data;
+  const row = { name, icon, color, translations: categoryTranslationsToRow(translations) };
 
   if (categoryId) {
-    const { error } = await supabase.from("categories").update(parsed.data).eq("id", categoryId);
+    const { error } = await supabase.from("categories").update(row).eq("id", categoryId);
     if (error) return { errors: { form: "Couldn't save the category. Please try again." } };
   } else {
     const { data: last } = await supabase
@@ -30,9 +39,9 @@ export async function saveCategory(
       .order("position", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const base = slugify(parsed.data.name);
+    const base = slugify(name);
     const { error } = await supabase.from("categories").insert({
-      ...parsed.data,
+      ...row,
       slug: `${base}-${Math.random().toString(36).slice(2, 6)}`,
       position: (last?.position ?? 0) + 1,
     });

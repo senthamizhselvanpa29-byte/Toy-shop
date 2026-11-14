@@ -22,15 +22,42 @@ export type ProductCardData = {
   isNew?: boolean;
 };
 
+// Words on the card; the shop passes them in the shopper's language.
+export type CardLabels = {
+  new: string;
+  soldOut: string;
+  seeToy: string;
+  onlyLeft: string; // "{count}" is replaced
+  addToCart: string;
+  outOfStock: string;
+  off: string; // "{percent}" is replaced
+  mrp: string;
+  ages: Partial<Record<AgeGroup, string>>;
+};
+
+export const DEFAULT_CARD_LABELS: CardLabels = {
+  new: "New",
+  soldOut: "Sold out",
+  seeToy: "See toy →",
+  onlyLeft: "Only {count} left!",
+  addToCart: "Add to cart 🛒",
+  outOfStock: "Out of stock",
+  off: "{percent}% off",
+  mrp: "MRP",
+  ages: {},
+};
+
 // With `href`, the whole card links to the toy's page (shop). Without it, the
 // card shows its own buttons (previews in the owner area and style guide).
 export function ProductCard({
   product,
   href,
   topRight,
+  labels = DEFAULT_CARD_LABELS,
   className,
 }: {
   product: ProductCardData;
+  labels?: CardLabels;
   href?: string;
   // Extra control over the photo's top-right corner (e.g. the wishlist heart).
   topRight?: ReactNode;
@@ -70,7 +97,7 @@ export function ProductCard({
         )}
         {product.isNew && (
           <Badge color="ink" className="absolute top-3 left-3">
-            New
+            {labels.new}
           </Badge>
         )}
         {topRight && <div className="absolute top-3 right-3 z-10">{topRight}</div>}
@@ -102,16 +129,18 @@ export function ProductCard({
           )}
         </h3>
         <div>
-          <AgeBadge age={product.ageGroup} />
+          <AgeBadge age={product.ageGroup} label={labels.ages[product.ageGroup]} />
         </div>
         <PriceTag
           pricePaise={product.pricePaise}
           mrpPaise={product.mrpPaise}
+          offLabel={labels.off}
+          mrpLabel={labels.mrp}
           className="mt-auto pt-1"
         />
         {lowStock && (
           <p className="text-sm font-bold text-orange-dark">
-            Only {product.stock} left!
+            {labels.onlyLeft.replace("{count}", String(product.stock))}
           </p>
         )}
         {href ? (
@@ -122,7 +151,7 @@ export function ProductCard({
               "mt-1 w-full group-hover:animate-wiggle",
             )}
           >
-            {outOfStock ? "Sold out" : "See toy →"}
+            {outOfStock ? labels.soldOut : labels.seeToy}
           </span>
         ) : (
           <Button
@@ -131,7 +160,7 @@ export function ProductCard({
             disabled={outOfStock}
             className="mt-1 w-full hover:animate-wiggle"
           >
-            {outOfStock ? "Out of stock" : "Add to cart 🛒"}
+            {outOfStock ? labels.outOfStock : labels.addToCart}
           </Button>
         )}
       </div>

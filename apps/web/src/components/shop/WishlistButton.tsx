@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/components/i18n/I18nProvider";
 import { cn } from "@/lib/cn";
 import { useCustomer } from "./CustomerProvider";
 
@@ -13,8 +14,9 @@ export function WishlistButton({
   variant?: "icon" | "full";
 }) {
   const { wishlist, toggleWishlist } = useCustomer();
+  const { t } = useT();
   const saved = wishlist.has(productId);
-  const label = saved ? `Remove ${productName} from wishlist` : `Save ${productName} to wishlist`;
+  const label = t(saved ? "wishlist.removeNamed" : "wishlist.saveNamed", { name: productName });
 
   if (variant === "full") {
     return (
@@ -28,7 +30,7 @@ export function WishlistButton({
         )}
       >
         <span aria-hidden>{saved ? "❤️" : "🤍"}</span>
-        {saved ? "Saved to wishlist" : "Save to wishlist"}
+        {saved ? t("wishlist.saved") : t("wishlist.save")}
       </button>
     );
   }

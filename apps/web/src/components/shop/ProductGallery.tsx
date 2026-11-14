@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useT } from "@/components/i18n/I18nProvider";
 import { bgColor, type ThemeColor } from "@/components/ui/colors";
 import { cn } from "@/lib/cn";
 
@@ -17,6 +18,7 @@ export function ProductGallery({
   placeholderColor: ThemeColor;
 }) {
   const [index, setIndex] = useState(0);
+  const { t } = useT();
   const current = images[index];
 
   return (
@@ -44,13 +46,13 @@ export function ProductGallery({
       </div>
 
       {images.length > 1 && (
-        <ul className="flex gap-2 overflow-x-auto pb-1" aria-label="More photos">
+        <ul className="flex gap-2 overflow-x-auto pb-1" aria-label={t("product.morePhotos")}>
           {images.map((image, i) => (
             <li key={image.url} className="shrink-0">
               <button
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={`Show photo ${i + 1}`}
+                aria-label={t("product.showPhoto", { n: i + 1 })}
                 aria-current={i === index ? "true" : undefined}
                 className={cn(
                   "relative block size-20 overflow-hidden rounded-2xl border-3 transition",

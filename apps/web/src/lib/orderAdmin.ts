@@ -17,7 +17,9 @@ export type ManagedOrder = {
 export const MANAGED_ORDER_FIELDS =
   "id, status, payment_method, payment_status, razorpay_payment_id, total_paise, return_status, delivered_at, placed_at";
 
-export type ActionResult = { ok?: boolean; error?: string; notice?: string };
+// error/notice are translation keys (shown in the customer's language);
+// vars fill in their {placeholders}.
+export type ActionResult = { ok?: boolean; error?: string; notice?: string; vars?: Record<string, string | number> };
 
 // Gives money back for an order: through Razorpay for online payments, or
 // recorded as refunded for cash on delivery (the owner returns the cash).
@@ -30,11 +32,11 @@ async function refundOrder(admin: SupabaseClient, order: ManagedOrder): Promise<
       .from("orders")
       .update({ payment_status: "refunded", refund_paise: order.total_paise, refunded_at: now })
       .eq("id", order.id);
-    return { ok: true, notice: "Marked as refunded — please return the cash or send it by UPI." };
+    return { ok: true, notice: "notice.codRefund" };
   }
 
   if (!order.razorpay_payment_id || !isRazorpayConfigured()) {
-    return { ok: true, notice: "Couldn't refund automatically. Please refund this payment in your Razorpay dashboard." };
+    return { ok: true, notice: "notice.refundManual" };
   }
   try {
     const refund = await refundRazorpayPayment(order.razorpay_payment_id);
@@ -42,11 +44,11 @@ async function refundOrder(admin: SupabaseClient, order: ManagedOrder): Promise<
       .from("orders")
       .update({ payment_status: "refunded", refund_id: refund.id, refund_paise: order.total_paise, refunded_at: now })
       .eq("id", order.id);
-    return { ok: true, notice: "Refund started — it usually reaches the customer in 5–7 working days." };
+    return { ok: true, notice: "notice.refundStarted" };
   } catch {
     return {
       ok: true,
-      notice: "The automatic refund didn't go through. Please refund this payment in your Razorpay dashboard.",
+      notice: "notice.refundFailed",
     };
   }
 }
@@ -58,9 +60,9 @@ export async function cancelOrder(
   by: "customer" | "owner",
   reason: string,
 ): Promise<ActionResult> {
-  if (order.status === "cancelled") return { error: "This order is already cancelled." };
-  if (order.status === "delivered") return { error: "Delivered orders can't be cancelled. Use a return instead." };
-  if (!order.placed_at) return { error: "This order was never placed." };
+  if (order.status === "cancelled") return { error: "err.alreadyCancelled" };
+  if (order.status === "delivered") return { error: "err.deliveredNoCancel" };
+  if (!order.placed_at) return { error: "err.neverPlaced" };
 
   const { data } = await admin
     .from("orders")
@@ -73,7 +75,7 @@ export async function cancelOrder(
     .eq("id", order.id)
     .neq("status", "cancelled")
     .select("id");
-  if (!data?.length) return { error: "This order is already cancelled." };
+  if (!data?.length) return { error: "err.alreadyCancelled" };
 
   await admin.rpc("restore_order_stock", { p_order_id: order.id });
   return refundOrder(admin, order);
@@ -82,7 +84,7 @@ export async function cancelOrder(
 // Finishes a return: toys back in stock and the money refunded.
 export async function completeReturn(admin: SupabaseClient, order: ManagedOrder): Promise<ActionResult> {
   if (order.return_status !== "approved" && order.return_status !== "requested") {
-    return { error: "There's no open return for this order." };
+    return { error: "err.noOpenReturn" };
   }
   await admin.from("orders").update({ return_status: "returned" }).eq("id", order.id);
   await admin.rpc("restore_order_stock", { p_order_id: order.id });

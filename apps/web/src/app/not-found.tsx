@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { buttonClasses, TobySays } from "@/components/ui";
+import { getT } from "@/lib/i18n";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getT();
   return (
     <main className="mx-auto max-w-xl px-4 py-20">
       <TobySays
-        title="Oops! Toby couldn't find that page"
+        title={t("notFound.title")}
         action={
           <Link href="/toys" className={buttonClasses("primary", "lg")}>
-            Back to the toys 🧸
+            {t("notFound.back")} 🧸
           </Link>
         }
       >
-        It may have moved, or the toy is no longer in the shop.
+        {t("notFound.text")}
       </TobySays>
     </main>
   );

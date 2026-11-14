@@ -31,7 +31,7 @@ export async function updateProfile(input: ProfileFormInput): Promise<FormResult
     .from("profiles")
     .update({ full_name: parsed.data.fullName || null, phone: parsed.data.phone })
     .eq("id", user.id);
-  if (error) return { errors: { form: "Couldn't save your details. Please try again." } };
+  if (error) return { errors: { form: "err.saveDetails" } };
 
   revalidatePath("/account");
   revalidatePath("/checkout");
@@ -71,7 +71,7 @@ export async function saveAddress(addressId: string | null, input: AddressFormIn
   const { error } = addressId
     ? await supabase.from("addresses").update(row).eq("id", addressId).eq("user_id", user.id)
     : await supabase.from("addresses").insert(row);
-  if (error) return { errors: { form: "Couldn't save the address. Please try again." } };
+  if (error) return { errors: { form: "err.saveAddress" } };
 
   revalidatePath("/account");
   revalidatePath("/checkout");

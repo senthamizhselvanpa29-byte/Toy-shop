@@ -3,43 +3,32 @@ import type { ReactNode } from "react";
 import { AGE_GROUPS } from "@toyshop/shared";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { buttonClasses, CategoryTile, TobySays } from "@/components/ui";
+import { getT } from "@/lib/i18n";
 import { getCategories, getHomeSections } from "@/lib/shop";
 
-// Refresh at most once a minute (and right away when the owner saves a toy).
-export const revalidate = 60;
-
-const ageStyles = [
-  "bg-bubblegum",
-  "bg-sunshine",
-  "bg-mint",
-  "bg-sky",
-  "bg-grape",
-];
+const ageStyles = ["bg-bubblegum", "bg-sunshine", "bg-mint", "bg-sky", "bg-grape"];
 const ageEmoji = ["👶", "🧒", "👧", "🧑", "🧑‍🎓"];
 
 export default async function HomePage() {
-  const [categories, sections] = await Promise.all([getCategories(), getHomeSections()]);
+  const t = await getT();
+  const [categories, sections] = await Promise.all([getCategories(t.locale), getHomeSections(t.locale)]);
 
   return (
     <div className="flex flex-col gap-14 py-8">
       <section className="relative overflow-hidden rounded-bubble bg-gradient-to-br from-sky to-grape px-6 py-12 text-center text-ink shadow-soft sm:px-12 sm:py-16 sm:text-left">
         <div className="relative z-10 flex flex-col items-center gap-5 sm:max-w-xl sm:items-start">
-          <span className="rounded-full bg-white/80 px-4 py-1 text-sm font-bold">
-            🎉 Happy toys for happy kids
-          </span>
+          <span className="rounded-full bg-white/80 px-4 py-1 text-sm font-bold">🎉 {t("home.badge")}</span>
           <h1 className="text-4xl leading-tight font-semibold sm:text-6xl">
-            Find a toy they&apos;ll <span className="text-white drop-shadow">love!</span>
+            {t("home.titleStart")} <span className="text-white drop-shadow">{t("home.titleEnd")}</span>
           </h1>
-          <p className="text-lg sm:text-xl">
-            Teddies, puzzles, science kits and more — picked for every age and delivered across India.
-          </p>
+          <p className="text-lg sm:text-xl">{t("home.subtitle")}</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/toys" className={buttonClasses("primary", "lg")}>
-              Shop all toys 🧸
+              {t("home.shopAll")} 🧸
             </Link>
             {sections.deals.length > 0 && (
               <Link href="/toys?sort=discount" className={buttonClasses("ghost", "lg") + " bg-white/70"}>
-                See deals
+                {t("home.seeDeals")}
               </Link>
             )}
           </div>
@@ -60,17 +49,18 @@ export default async function HomePage() {
       </section>
 
       {sections.total === 0 ? (
-        <TobySays title="Our shelves are being stocked!">
-          New toys are on their way. Please check back soon.
-        </TobySays>
+        <TobySays title={t("home.emptyTitle")}>{t("home.emptyText")}</TobySays>
       ) : (
         <>
           {categories.length > 0 && (
-            <Section title="Shop by category" emoji="🗂️">
+            <Section title={t("home.byCategory")} emoji="🗂️">
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                 {categories.map((category) => (
                   <li key={category.id}>
-                    <Link href={`/toys?category=${category.slug}`} className="block rounded-bubble focus-visible:outline-3 focus-visible:outline-sky-dark">
+                    <Link
+                      href={`/toys?category=${category.slug}`}
+                      className="block rounded-bubble focus-visible:outline-3 focus-visible:outline-sky-dark"
+                    >
                       <CategoryTile name={category.name} icon={category.icon} color={category.color} />
                     </Link>
                   </li>
@@ -80,18 +70,18 @@ export default async function HomePage() {
           )}
 
           {sections.featured.length > 0 && (
-            <Section title="Customer favourites" emoji="⭐" href="/toys">
-              <ProductGrid products={sections.featured} />
+            <Section title={t("home.favourites")} emoji="⭐" href="/toys" seeAll={t("home.seeAll")}>
+              <ProductGrid products={sections.featured} t={t} />
             </Section>
           )}
 
           {sections.deals.length > 0 && (
-            <Section title="Super deals" emoji="🏷️" href="/toys?sort=discount">
-              <ProductGrid products={sections.deals} />
+            <Section title={t("home.deals")} emoji="🏷️" href="/toys?sort=discount" seeAll={t("home.seeAll")}>
+              <ProductGrid products={sections.deals} t={t} />
             </Section>
           )}
 
-          <Section title="Shop by age" emoji="🎂">
+          <Section title={t("home.byAge")} emoji="🎂">
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {AGE_GROUPS.map((group, index) => (
                 <li key={group.id}>
@@ -102,7 +92,7 @@ export default async function HomePage() {
                     <span className="text-4xl" aria-hidden>
                       {ageEmoji[index]}
                     </span>
-                    {group.label}
+                    {t(`age.${group.id}`)}
                   </Link>
                 </li>
               ))}
@@ -110,8 +100,8 @@ export default async function HomePage() {
           </Section>
 
           {sections.newArrivals.length > 0 && (
-            <Section title="New arrivals" emoji="✨" href="/toys?sort=new">
-              <ProductGrid products={sections.newArrivals} />
+            <Section title={t("home.newArrivals")} emoji="✨" href="/toys?sort=new" seeAll={t("home.seeAll")}>
+              <ProductGrid products={sections.newArrivals} t={t} />
             </Section>
           )}
         </>
@@ -119,9 +109,9 @@ export default async function HomePage() {
 
       <section className="grid gap-4 sm:grid-cols-3">
         {[
-          { icon: "🛡️", title: "Child-friendly toys", text: "Every toy is chosen with little hands in mind." },
-          { icon: "🚚", title: "Delivery across India", text: "From our shop to your doorstep." },
-          { icon: "💳", title: "Easy payments", text: "UPI, cards and cash on delivery — coming soon." },
+          { icon: "🛡️", title: t("home.trust1Title"), text: t("home.trust1Text") },
+          { icon: "🚚", title: t("home.trust2Title"), text: t("home.trust2Text") },
+          { icon: "💳", title: t("home.trust3Title"), text: t("home.trust3Text") },
         ].map((item) => (
           <div key={item.title} className="flex items-start gap-3 rounded-bubble bg-white p-5 shadow-soft">
             <span className="text-3xl" aria-hidden>
@@ -142,11 +132,13 @@ function Section({
   title,
   emoji,
   href,
+  seeAll,
   children,
 }: {
   title: string;
   emoji: string;
   href?: string;
+  seeAll?: string;
   children: ReactNode;
 }) {
   return (
@@ -157,7 +149,7 @@ function Section({
         </h2>
         {href && (
           <Link href={href} className="shrink-0 font-bold text-sky-dark hover:underline">
-            See all →
+            {seeAll} →
           </Link>
         )}
       </div>

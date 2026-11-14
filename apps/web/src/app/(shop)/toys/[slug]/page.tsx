@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AGE_GROUPS, formatPaise } from "@toyshop/shared";
+import { formatPaise } from "@toyshop/shared";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { AgeBadge, Badge, Card, PriceTag, type ThemeColor } from "@/components/ui";
+import { getT } from "@/lib/i18n";
 import { getProductBySlug, getRelatedProducts } from "@/lib/shop";
-
-export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product) return { title: "Toy not found · Toy Shop" };
+  const t = await getT();
+  const product = await getProductBySlug(slug, t.locale);
+  if (!product) return { title: `${t("product.notFound")} · Toy Shop` };
   const description =
     product.shortDescription || product.description.slice(0, 150) || `${product.name} at Toy Shop`;
   return {
@@ -32,28 +32,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const t = await getT();
+  const product = await getProductBySlug(slug, t.locale);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product);
+  const related = await getRelatedProducts(product, t.locale);
   const outOfStock = product.stock <= 0;
   const lowStock = !outOfStock && product.stock <= 5;
-  const ageLabel = AGE_GROUPS.find((group) => group.id === product.ageGroup)?.label;
+  const ageLabel = t(`age.${product.ageGroup}`);
 
   const details = [
-    { label: "Age", value: ageLabel },
-    { label: "Brand", value: product.brand },
-    { label: "Weight", value: product.weightGrams ? `${product.weightGrams} g (with box)` : "" },
-    { label: "BIS / ISI licence", value: product.bisLicense },
-    { label: "Item code", value: product.sku },
+    { label: t("product.age"), value: ageLabel },
+    { label: t("product.brand"), value: product.brand },
+    { label: t("product.weight"), value: product.weightGrams ? t("product.weightValue", { grams: product.weightGrams }) : "" },
+    { label: t("product.bis"), value: product.bisLicense },
+    { label: t("product.itemCode"), value: product.sku },
   ].filter((row) => row.value);
 
   return (
     <div className="flex flex-col gap-12 py-8">
-      <nav aria-label="Breadcrumb" className="text-sm text-ink-soft">
-        <Link href="/" className="hover:underline">Home</Link>
+      <nav aria-label={t("product.breadcrumb")} className="text-sm text-ink-soft">
+        <Link href="/" className="hover:underline">{t("product.home")}</Link>
         {" / "}
-        <Link href="/toys" className="hover:underline">Toys</Link>
+        <Link href="/toys" className="hover:underline">{t("product.toys")}</Link>
         {product.category && (
           <>
             {" / "}
@@ -85,22 +86,28 @@ export default async function ProductPage({ params }: Props) {
           {product.shortDescription && <p className="text-lg text-ink-soft">{product.shortDescription}</p>}
 
           <div className="flex flex-wrap gap-2">
-            <AgeBadge age={product.ageGroup} />
+            <AgeBadge age={product.ageGroup} label={ageLabel} />
             {outOfStock ? (
-              <Badge color="ink">Sold out</Badge>
+              <Badge color="ink">{t("card.soldOut")}</Badge>
             ) : lowStock ? (
-              <Badge color="orange">Only {product.stock} left!</Badge>
+              <Badge color="orange">{t("card.onlyLeft", { count: product.stock })}</Badge>
             ) : (
-              <Badge color="mint">✓ In stock</Badge>
+              <Badge color="mint">✓ {t("toys.inStock")}</Badge>
             )}
           </div>
 
           <div>
-            <PriceTag pricePaise={product.pricePaise} mrpPaise={product.mrpPaise ?? undefined} size="lg" />
-            <p className="text-sm text-ink-soft">Inclusive of all taxes</p>
+            <PriceTag
+              pricePaise={product.pricePaise}
+              mrpPaise={product.mrpPaise ?? undefined}
+              size="lg"
+              offLabel={t("card.off")}
+              mrpLabel={t("card.mrp")}
+            />
+            <p className="text-sm text-ink-soft">{t("product.inclTaxes")}</p>
             {product.mrpPaise && product.mrpPaise > product.pricePaise && (
               <p className="text-sm font-bold text-mint-dark">
-                You save {formatPaise(product.mrpPaise - product.pricePaise)}
+                {t("product.youSave", { amount: formatPaise(product.mrpPaise - product.pricePaise) })}
               </p>
             )}
           </div>
@@ -108,7 +115,7 @@ export default async function ProductPage({ params }: Props) {
           <Card className="flex flex-col gap-3 border-sunshine-dark/40">
             <AddToCart productId={product.id} stock={product.stock} />
             <p className="text-center text-sm text-ink-soft">
-              🔒 Secure checkout · UPI, cards, net banking or cash on delivery
+              🔒 {t("product.secure")}
             </p>
             <WishlistButton productId={product.id} productName={product.name} variant="full" />
           </Card>
@@ -128,7 +135,7 @@ export default async function ProductPage({ params }: Props) {
 
       {product.description && (
         <section className="max-w-3xl">
-          <h2 className="text-2xl sm:text-3xl">About this toy</h2>
+          <h2 className="text-2xl sm:text-3xl">{t("product.about")}</h2>
           <div className="mt-3 flex flex-col gap-3 text-lg leading-relaxed">
             {product.description.split(/\n{2,}/).map((paragraph, i) => (
               <p key={i} className="whitespace-pre-line">
@@ -141,8 +148,8 @@ export default async function ProductPage({ params }: Props) {
 
       {related.length > 0 && (
         <section className="flex flex-col gap-5">
-          <h2 className="text-2xl sm:text-3xl">You might also like 💛</h2>
-          <ProductGrid products={related} />
+          <h2 className="text-2xl sm:text-3xl">{t("product.related")} 💛</h2>
+          <ProductGrid products={related} t={t} />
         </section>
       )}
     </div>

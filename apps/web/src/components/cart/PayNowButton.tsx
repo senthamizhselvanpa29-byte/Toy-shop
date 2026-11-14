@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatPaise } from "@toyshop/shared";
 import { payExistingOrder } from "@/app/(shop)/checkout/actions";
+import { useT } from "@/components/i18n/I18nProvider";
 import { Button } from "@/components/ui";
 import { payWithRazorpay } from "./razorpayCheckout";
 
 export function PayNowButton({ orderId, totalPaise }: { orderId: string; totalPaise: number }) {
   const router = useRouter();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,7 +24,7 @@ export function PayNowButton({ orderId, totalPaise }: { orderId: string; totalPa
           setError("");
           const result = await payExistingOrder(orderId);
           if ("error" in result) {
-            setError(result.error);
+            setError(t(result.error));
             setBusy(false);
             return;
           }
@@ -32,7 +34,7 @@ export function PayNowButton({ orderId, totalPaise }: { orderId: string; totalPa
           router.refresh();
         }}
       >
-        {busy ? "Opening payment…" : `Pay ${formatPaise(totalPaise)} now 🔒`}
+        {busy ? t("order.openingPayment") : `${t("order.payNow", { amount: formatPaise(totalPaise) })} 🔒`}
       </Button>
       {error && <p role="alert" className="font-bold text-bubblegum-dark">{error}</p>}
     </div>

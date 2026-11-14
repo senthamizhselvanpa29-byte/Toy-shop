@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { INDIAN_STATES, parseRupeesToPaise } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { refreshCatalog } from "@/lib/revalidate";
 
 export type SettingsInput = {
   deliveryFee: string;
@@ -58,6 +59,6 @@ export async function saveShopSettings(input: SettingsInput): Promise<{ errors?:
   if (error) return { errors: { form: "Couldn't save. Please try again." } };
 
   revalidatePath("/admin/settings");
-  revalidatePath("/", "layout");
+  refreshCatalog();
   return { ok: true };
 }

@@ -7,7 +7,6 @@ import {
   formatPaise,
   ORDER_PROGRESS,
   ORDER_STATUS_LABELS,
-  RETURN_STATUS_LABELS,
   type OrderStatus,
   type ReturnStatus,
 } from "@toyshop/shared";
@@ -16,6 +15,7 @@ import { PayNowButton } from "@/components/cart/PayNowButton";
 import { buttonClasses, Card } from "@/components/ui";
 import { productImageUrl } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
+import { getT } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +75,7 @@ export default async function OrderPage({
   const { id } = await params;
   const { placed, payment } = await searchParams;
   if (!UUID.test(id)) notFound();
+  const t = await getT();
 
   const supabase = await createClient();
   const {
@@ -104,7 +105,7 @@ export default async function OrderPage({
     delivered: order.delivered_at,
   };
   const shortDate = (value: string | null) =>
-    value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "";
+    value ? new Date(value).toLocaleDateString(t.tag, { day: "numeric", month: "short" }) : "";
   const returnDays = shop?.return_days ?? 7;
   const returnOpen =
     order.status === "delivered" &&
@@ -116,16 +117,16 @@ export default async function OrderPage({
     <div className="flex flex-col gap-6 py-8">
       <div>
         <Link href="/account/orders" className="text-sm font-bold text-sky-dark">
-          ← My orders
+          ← {t("account.orders")}
         </Link>
-        <h1 className="mt-1 text-3xl sm:text-4xl">Order {order.order_number}</h1>
+        <h1 className="mt-1 text-3xl sm:text-4xl">{t("order.title", { number: order.order_number })}</h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-ink-soft">
-            Placed on {new Date(order.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+            {t("order.placedOn", { date: new Date(order.created_at).toLocaleString(t.tag, { dateStyle: "medium", timeStyle: "short" }) })}
           </p>
           {order.placed_at && (
             <Link href={`/invoice/${order.id}`} target="_blank" className={buttonClasses("ghost", "sm")}>
-              🧾 Invoice
+              🧾 {t("order.invoice")}
             </Link>
           )}
         </div>
@@ -134,22 +135,20 @@ export default async function OrderPage({
       {placed && !waitingForPayment && (
         <div role="status" className="rounded-bubble bg-mint/30 p-6 text-center">
           <p className="text-5xl" aria-hidden>🎉🧸🎈</p>
-          <p className="mt-2 font-heading text-2xl">Thank you! Your order is placed.</p>
-          <p className="text-ink-soft">We&apos;ll get your toys ready and let you know when they&apos;re on the way.</p>
+          <p className="mt-2 font-heading text-2xl">{t("order.thanks")}</p>
+          <p className="text-ink-soft">{t("order.thanksText")}</p>
         </div>
       )}
       {waitingForPayment && (
         <Card className="flex flex-col gap-3 border-orange">
           <p className="font-heading text-xl">
             {payment === "failed"
-              ? "⚠️ The payment didn't go through."
+              ? `⚠️ ${t("order.payFailed")}`
               : payment === "closed"
-                ? "⏳ You closed the payment window."
-                : "⏳ This order is waiting for payment."}
+                ? `⏳ ${t("order.payClosed")}`
+                : `⏳ ${t("order.payWaiting")}`}
           </p>
-          <p className="text-ink-soft">
-            No money was taken. Your order is saved — tap below to pay and we&apos;ll start packing.
-          </p>
+          <p className="text-ink-soft">{t("order.payWaitingText")}</p>
           <PayNowButton orderId={order.id} totalPaise={order.total_paise} />
         </Card>
       )}
@@ -168,7 +167,7 @@ export default async function OrderPage({
                 >
                   {ORDER_STATUS_LABELS[item].icon}
                 </span>
-                <span className={index <= step ? "font-bold" : "text-ink-soft"}>{ORDER_STATUS_LABELS[item].label}</span>
+                <span className={index <= step ? "font-bold" : "text-ink-soft"}>{t(`status.${item}`)}</span>
                 <span className="text-xs text-ink-soft">{shortDate(stepDates[item])}</span>
               </li>
             ))}
@@ -178,16 +177,17 @@ export default async function OrderPage({
       {(order.status === "shipped" || order.status === "delivered") && (order.courier_name || order.tracking_number) && (
         <Card className="flex flex-wrap items-center justify-between gap-3">
           <p>
-            🚚 Sent with <strong>{order.courier_name || "our courier"}</strong>
+            🚚 {t("order.sentWith")} <strong>{order.courier_name || t("order.ourCourier")}</strong>
             {order.tracking_number && (
               <>
-                {" · "}Tracking number <strong>{order.tracking_number}</strong>
+                {" · "}
+                {t("order.trackingNumber")} <strong>{order.tracking_number}</strong>
               </>
             )}
           </p>
           {order.tracking_url && (
             <a href={order.tracking_url} target="_blank" rel="noreferrer" className={buttonClasses("secondary", "sm")}>
-              Track parcel →
+              {t("order.track")} →
             </a>
           )}
         </Card>
@@ -195,18 +195,25 @@ export default async function OrderPage({
       {order.status === "cancelled" && (
         <div className="rounded-2xl bg-ink/10 px-4 py-3">
           <p className="font-bold">
-            {status.icon} This order was cancelled{order.cancelled_by === "owner" ? " by the shop" : ""}.
-            {order.cancel_reason && ` Reason: ${order.cancel_reason}`}
+            {status.icon} {t(order.cancelled_by === "owner" ? "order.cancelledByShop" : "order.cancelled")}
+            {order.cancel_reason && ` ${t("order.reason", { reason: order.cancel_reason })}`}
           </p>
           {order.refund_paise ? (
-            <p>💸 {formatPaise(order.refund_paise)} refunded{order.payment_method === "razorpay" ? " to your original payment method (usually 5–7 working days)." : "."}</p>
+            <p>
+              💸{" "}
+              {t(order.payment_method === "razorpay" ? "order.refundedOnline" : "order.refunded", {
+                amount: formatPaise(order.refund_paise),
+              })}
+            </p>
           ) : null}
         </div>
       )}
       {order.return_status !== "none" && (
         <p className="rounded-2xl bg-orange/20 px-4 py-3 font-bold">
-          ↩️ {RETURN_STATUS_LABELS[order.return_status]}
-          {order.return_status === "returned" && order.refund_paise ? ` — ${formatPaise(order.refund_paise)} refunded.` : ""}
+          ↩️ {t(`return.${order.return_status}`)}
+          {order.return_status === "returned" && order.refund_paise
+            ? ` — ${t("order.refunded", { amount: formatPaise(order.refund_paise) })}`
+            : ""}
         </p>
       )}
       <CustomerOrderActions
@@ -219,7 +226,7 @@ export default async function OrderPage({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-4">
-          <h2 className="text-2xl">Toys</h2>
+          <h2 className="text-2xl">{t("summary.toys")}</h2>
           <ul className="flex flex-col gap-3">
             {order.order_items.map((item) => (
               <li key={item.id} className="flex items-center gap-3">
@@ -246,15 +253,15 @@ export default async function OrderPage({
           </ul>
           <dl className="flex flex-col gap-1 border-t-2 border-dashed border-ink/15 pt-3">
             <div className="flex justify-between">
-              <dt>Toys</dt>
+              <dt>{t("summary.toys")}</dt>
               <dd>{formatPaise(order.subtotal_paise)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Delivery</dt>
-              <dd>{order.delivery_paise ? formatPaise(order.delivery_paise) : "FREE"}</dd>
+              <dt>{t("summary.delivery")}</dt>
+              <dd>{order.delivery_paise ? formatPaise(order.delivery_paise) : t("summary.free")}</dd>
             </div>
             <div className="flex justify-between font-heading text-xl">
-              <dt>Total</dt>
+              <dt>{t("summary.total")}</dt>
               <dd>{formatPaise(order.total_paise)}</dd>
             </div>
           </dl>
@@ -262,7 +269,7 @@ export default async function OrderPage({
 
         <div className="flex flex-col gap-6">
           <Card>
-            <h2 className="text-xl">📍 Delivering to</h2>
+            <h2 className="text-xl">📍 {t("order.deliveringTo")}</h2>
             <address className="mt-2 not-italic leading-relaxed">
               <strong>{order.ship_name}</strong>
               <br />
@@ -271,7 +278,7 @@ export default async function OrderPage({
               <br />
               {order.ship_landmark && (
                 <>
-                  Near {order.ship_landmark}
+                  {t("address.near", { landmark: order.ship_landmark })}
                   <br />
                 </>
               )}
@@ -280,18 +287,18 @@ export default async function OrderPage({
             </address>
           </Card>
           <Card>
-            <h2 className="text-xl">💳 Payment</h2>
+            <h2 className="text-xl">💳 {t("order.payment")}</h2>
             <p className="mt-2">
-              {order.payment_method === "cod" ? "Cash on delivery" : "Online (Razorpay)"}
+              {order.payment_method === "cod" ? t("checkout.cod") : t("order.online")}
               {" · "}
               <strong>
                 {order.payment_status === "paid"
-                  ? "Paid ✓"
+                  ? `${t("order.paid")} ✓`
                   : order.payment_method === "cod"
-                    ? "Pay when it arrives"
+                    ? t("order.payOnArrival")
                     : order.payment_status === "refunded"
-                      ? "Refunded"
-                      : "Not paid yet"}
+                      ? t("order.refundedShort")
+                      : t("order.notPaid")}
               </strong>
             </p>
           </Card>

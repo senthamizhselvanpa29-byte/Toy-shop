@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { CartLine } from "@toyshop/shared";
+import { getLocale } from "@/lib/i18n";
 import { quoteCart, type Quote } from "@/lib/orders";
 import { createRazorpayOrder, isRazorpayConfigured, razorpayKeyId } from "@/lib/razorpay";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { refreshCatalog } from "@/lib/revalidate";
 
 export type RazorpayCheckout = {
   keyId: string;
@@ -21,7 +22,7 @@ export type PlaceOrderResult =
 
 export async function quoteCheckout(cart: CartLine[]): Promise<Quote> {
   const supabase = await createClient();
-  return quoteCart(supabase, cart);
+  return quoteCart(supabase, cart, await getLocale());
 }
 
 export async function placeOrder(input: {
@@ -35,23 +36,23 @@ export async function placeOrder(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Please log in again to place your order." };
-  if (!isAdminConfigured()) return { error: "Ordering isn't switched on yet. Please try again later." };
+  if (!user) return { error: "err.loginAgain" };
+  if (!isAdminConfigured()) return { error: "err.orderingOff" };
 
   const quote = await quoteCart(supabase, input.cart);
   const lines = quote.lines.filter((line) => line.quantity > 0);
-  if (lines.length === 0) return { error: "Your cart is empty.", quote };
+  if (lines.length === 0) return { error: "err.cartEmpty", quote };
   if (quote.hasProblems || quote.totalPaise !== input.expectedTotalPaise) {
-    return { error: "Some prices or stock changed. Please check your order again.", quote };
+    return { error: "err.changed", quote };
   }
 
   if (input.paymentMethod === "cod") {
-    if (!quote.settings.codEnabled) return { error: "Cash on delivery isn't available right now.", quote };
+    if (!quote.settings.codEnabled) return { error: "err.codOff", quote };
     if (quote.totalPaise > quote.settings.codMaxPaise) {
-      return { error: "This order is too large for cash on delivery. Please pay online.", quote };
+      return { error: "err.codTooLarge", quote };
     }
   } else if (!isRazorpayConfigured()) {
-    return { error: "Online payment isn't available yet. Please choose cash on delivery.", quote };
+    return { error: "err.onlineOff", quote };
   }
 
   const { data: address } = await supabase
@@ -60,7 +61,7 @@ export async function placeOrder(input: {
     .eq("id", input.addressId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!address) return { error: "Please choose a delivery address." };
+  if (!address) return { error: "err.chooseAddress" };
 
   const admin = createAdminClient();
   const isCod = input.paymentMethod === "cod";
@@ -96,7 +97,7 @@ export async function placeOrder(input: {
     })
     .select("id, order_number")
     .single();
-  if (orderError || !order) return { error: "Couldn't place your order. Please try again." };
+  if (orderError || !order) return { error: "err.placeFailed" };
 
   const { error: itemsError } = await admin.from("order_items").insert(
     lines.map((line) => ({
@@ -114,12 +115,12 @@ export async function placeOrder(input: {
   );
   if (itemsError) {
     await admin.from("orders").delete().eq("id", order.id);
-    return { error: "Couldn't place your order. Please try again." };
+    return { error: "err.placeFailed" };
   }
 
   if (isCod) {
     await admin.rpc("confirm_order_stock", { p_order_id: order.id });
-    revalidatePath("/", "layout");
+    refreshCatalog();
     return { orderId: order.id };
   }
 
@@ -164,8 +165,8 @@ export async function payExistingOrder(orderId: string): Promise<{ error: string
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Please log in again." };
-  if (!isAdminConfigured() || !isRazorpayConfigured()) return { error: "Online payment isn't available right now." };
+  if (!user) return { error: "err.loginAgainShort" };
+  if (!isAdminConfigured() || !isRazorpayConfigured()) return { error: "err.onlineOffNow" };
 
   const { data: order } = await supabase
     .from("orders")
@@ -174,7 +175,7 @@ export async function payExistingOrder(orderId: string): Promise<{ error: string
     .eq("user_id", user.id)
     .maybeSingle();
   if (!order || order.payment_method !== "razorpay" || order.payment_status !== "pending" || order.status !== "pending_payment") {
-    return { error: "This order doesn't need a payment." };
+    return { error: "err.noPaymentNeeded" };
   }
 
   const prefill = { name: order.ship_name, email: user.email ?? "", contact: order.ship_phone };
@@ -194,6 +195,6 @@ export async function payExistingOrder(orderId: string): Promise<{ error: string
       razorpay: await startRazorpayPayment(createAdminClient(), order.id, order.order_number, order.total_paise, prefill),
     };
   } catch {
-    return { error: "Couldn't start the payment. Please try again in a minute." };
+    return { error: "err.startFailed" };
   }
 }

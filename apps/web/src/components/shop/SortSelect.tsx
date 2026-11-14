@@ -3,14 +3,14 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Select } from "@/components/ui";
 
-export function SortSelect({ options }: { options: readonly { id: string; label: string }[] }) {
+export function SortSelect({ options, label }: { options: readonly { id: string; label: string }[]; label: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   return (
     <label className="flex items-center gap-2 text-sm font-bold">
-      <span className="shrink-0">Sort by</span>
+      <span className="shrink-0">{label}</span>
       <Select
         value={params.get("sort") ?? "new"}
         onChange={(event) => {

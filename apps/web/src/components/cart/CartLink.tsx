@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useT } from "@/components/i18n/I18nProvider";
 import { useCart } from "./CartProvider";
 
 export function CartLink() {
   const { count } = useCart();
+  const { t } = useT();
   return (
     <Link
       href="/cart"
       className="relative flex size-10 items-center justify-center rounded-full text-xl hover:bg-ink/5"
-      aria-label={`Cart${count ? ` (${count})` : ""}`}
+      aria-label={`${t("header.cart")}${count ? ` (${count})` : ""}`}
     >
       <span aria-hidden>🛒</span>
       {count > 0 && (

@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import {
   AGE_GROUPS,
+  EMPTY_PRODUCT_TRANSLATIONS,
   GST_RATES,
   parseRupeesToPaise,
   type AgeGroup,
   type ProductStatus,
+  type ProductTranslations,
 } from "@toyshop/shared";
 import {
   Button,
@@ -40,6 +42,7 @@ export type ProductFormState = {
   weightGrams: string;
   bisLicense: string;
   isFeatured: boolean;
+  translations: ProductTranslations;
   images: PhotoItem[];
 };
 
@@ -58,6 +61,7 @@ export const EMPTY_PRODUCT: ProductFormState = {
   weightGrams: "",
   bisLicense: "",
   isFeatured: false,
+  translations: EMPTY_PRODUCT_TRANSLATIONS,
   images: [],
 };
 

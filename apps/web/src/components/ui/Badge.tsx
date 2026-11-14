@@ -32,8 +32,8 @@ const ageColor: Record<AgeGroup, ThemeColor> = {
   "12+": "grape",
 };
 
-export function AgeBadge({ age }: { age: AgeGroup }) {
-  const label = AGE_GROUPS.find((group) => group.id === age)?.label ?? age;
+export function AgeBadge({ age, label: customLabel }: { age: AgeGroup; label?: string }) {
+  const label = customLabel ?? AGE_GROUPS.find((group) => group.id === age)?.label ?? age;
   return (
     <Badge color={ageColor[age]}>
       <span aria-hidden>🎂</span>

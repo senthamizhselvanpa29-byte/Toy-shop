@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cancelOrder, MANAGED_ORDER_FIELDS, type ActionResult, type ManagedOrder } from "@/lib/orderAdmin";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { refreshCatalog } from "@/lib/revalidate";
 
 // Loads one of the signed-in customer's own orders (the database rules make
 // sure nobody can load someone else's).
@@ -26,15 +27,15 @@ function refresh(orderId: string) {
   revalidatePath("/account/orders");
   revalidatePath(`/account/orders/${orderId}`);
   revalidatePath("/admin/orders");
-  revalidatePath("/", "layout");
+  refreshCatalog();
 }
 
 export async function cancelMyOrder(orderId: string, reason: string): Promise<ActionResult> {
   const { order } = await loadOwnOrder(orderId);
-  if (!order) return { error: "Order not found." };
+  if (!order) return { error: "err.orderNotFound" };
   // Once packed, the shop handles cancellations.
   if (order.status !== "placed") {
-    return { error: "This order is already being packed or shipped, so it can't be cancelled here. Please contact the shop." };
+    return { error: "err.alreadyPacked" };
   }
   const result = await cancelOrder(createAdminClient(), order, "customer", reason || "Cancelled by customer");
   refresh(orderId);
@@ -43,16 +44,16 @@ export async function cancelMyOrder(orderId: string, reason: string): Promise<Ac
 
 export async function requestReturn(orderId: string, reason: string): Promise<ActionResult> {
   const { order } = await loadOwnOrder(orderId);
-  if (!order) return { error: "Order not found." };
-  if (order.status !== "delivered" || !order.delivered_at) return { error: "Returns open once your order is delivered." };
-  if (order.return_status !== "none") return { error: "A return has already been requested for this order." };
-  if (!reason.trim()) return { error: "Please tell us why you'd like to return it." };
+  if (!order) return { error: "err.orderNotFound" };
+  if (order.status !== "delivered" || !order.delivered_at) return { error: "err.returnNotDelivered" };
+  if (order.return_status !== "none") return { error: "err.returnAlready" };
+  if (!reason.trim()) return { error: "err.returnReason" };
 
   const admin = createAdminClient();
   const { data: settings } = await admin.from("shop_settings").select("return_days").eq("id", 1).maybeSingle();
   const days = settings?.return_days ?? 7;
   const deadline = new Date(order.delivered_at).getTime() + days * 24 * 60 * 60 * 1000;
-  if (Date.now() > deadline) return { error: `Returns are accepted within ${days} days of delivery.` };
+  if (Date.now() > deadline) return { error: "err.returnWindow", vars: { days } };
 
   await admin
     .from("orders")
@@ -60,5 +61,5 @@ export async function requestReturn(orderId: string, reason: string): Promise<Ac
     .eq("id", orderId)
     .eq("return_status", "none");
   refresh(orderId);
-  return { ok: true, notice: "Return requested — the shop will contact you about pickup." };
+  return { ok: true, notice: "order.returnRequested" };
 }

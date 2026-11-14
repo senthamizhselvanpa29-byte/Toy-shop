@@ -1,9 +1,9 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { markOrderPaid } from "@/lib/orders";
 import { isValidPaymentSignature } from "@/lib/razorpay";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { refreshCatalog } from "@/lib/revalidate";
 
 // Razorpay Checkout calls this (from the browser) after a successful payment.
 // The signature proves the payment is real; only then is the order marked paid.
@@ -36,6 +36,6 @@ export async function POST(request: NextRequest) {
   }
 
   await markOrderPaid(createAdminClient(), { orderId: order.id }, paymentId);
-  revalidatePath("/", "layout");
+  refreshCatalog();
   return NextResponse.json({ ok: true });
 }

@@ -10,6 +10,7 @@ import {
   type ManagedOrder,
 } from "@/lib/orderAdmin";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
+import { refreshCatalog } from "@/lib/revalidate";
 
 async function loadForOwner(orderId: string) {
   await requireOwner();
@@ -23,7 +24,7 @@ function refresh(orderId: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath("/", "layout");
+  refreshCatalog();
 }
 
 const NEXT_STEP: Record<string, "packed" | "shipped" | "delivered"> = {

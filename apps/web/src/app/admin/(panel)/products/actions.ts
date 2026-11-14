@@ -7,12 +7,14 @@ import {
   fieldErrors,
   PRODUCT_STATUSES,
   productFormSchema,
+  productTranslationsToRow,
   slugify,
   type ProductFormInput,
   type ProductStatus,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
 import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
+import { refreshCatalog } from "@/lib/revalidate";
 
 export type SaveProductResult = { errors: Record<string, string> };
 
@@ -23,7 +25,7 @@ function refreshShopPages(productId?: string) {
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
   // Refresh every shop page (home, listings, toy pages).
-  revalidatePath("/", "layout");
+  refreshCatalog();
 }
 
 // Inserts a product, adding a short suffix to the web address if the name is taken.
@@ -95,6 +97,7 @@ export async function saveProduct(
     weight_grams: values.weightGrams,
     bis_license: values.bisLicense,
     is_featured: values.isFeatured,
+    translations: productTranslationsToRow(values.translations),
     // Once the owner edits a demo toy, it becomes one of their own.
     is_demo: false,
   };
@@ -169,6 +172,7 @@ export async function duplicateProduct(productId: string) {
     gst_rate: product.gst_rate,
     weight_grams: product.weight_grams,
     bis_license: product.bis_license,
+    translations: product.translations ?? {},
     name,
     sku: null,
     status: "draft",

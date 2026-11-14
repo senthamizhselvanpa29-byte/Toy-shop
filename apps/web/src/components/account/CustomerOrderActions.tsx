@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { cancelMyOrder, requestReturn } from "@/app/(shop)/account/orders/actions";
+import { useT } from "@/components/i18n/I18nProvider";
 import { Button, Field, Select } from "@/components/ui";
 import type { ActionResult } from "@/lib/orderAdmin";
 
+// Reasons are saved in English (the owner's language) and shown translated.
 const CANCEL_REASONS = ["Ordered by mistake", "Found it cheaper elsewhere", "Delivery is too slow", "Want to change the toys", "Other"];
 const RETURN_REASONS = ["Toy arrived damaged", "Wrong toy delivered", "Missing parts", "Not as described", "Other"];
 
@@ -25,13 +27,14 @@ export function CustomerOrderActions({
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t } = useT();
 
   if (!canCancel && !canReturn && !message) return null;
 
   function run(action: () => Promise<ActionResult>, success: string) {
     startTransition(async () => {
       const result = await action();
-      setMessage(result.error ? { kind: "error", text: result.error } : { kind: "ok", text: result.notice ?? success });
+      setMessage(result.error ? { kind: "error", text: t(result.error, result.vars) } : { kind: "ok", text: t(result.notice ?? success, result.vars) });
       if (!result.error) setOpen(null);
     });
   }
@@ -53,12 +56,12 @@ export function CustomerOrderActions({
         <div className="flex flex-wrap gap-2">
           {canCancel && (
             <Button variant="ghost" size="sm" onClick={() => { setOpen("cancel"); setReason(""); }}>
-              ✖️ Cancel order
+              ✖️ {t("order.cancel")}
             </Button>
           )}
           {canReturn && (
             <Button variant="ghost" size="sm" onClick={() => { setOpen("return"); setReason(""); }}>
-              ↩️ Return toys (within {returnDays} days)
+              ↩️ {t("order.returnWithin", { days: returnDays })}
             </Button>
           )}
         </div>
@@ -68,17 +71,17 @@ export function CustomerOrderActions({
         <div className="flex flex-col gap-3 rounded-2xl bg-ink/5 p-4">
           <p className="font-bold">
             {open === "cancel"
-              ? `Cancel this order?${paidOnline ? " Your money will be refunded to the same payment method (usually 5–7 working days)." : ""}`
-              : "Tell us what's wrong and we'll arrange a pickup."}
+              ? `${t("order.cancelConfirm")}${paidOnline ? ` ${t("order.cancelRefundNote")}` : ""}`
+              : t("order.returnPrompt")}
           </p>
-          <Field id="order-reason" label="Reason">
+          <Field id="order-reason" label={t("order.reasonLabel")}>
             <Select id="order-reason" value={reason} onChange={(event) => setReason(event.target.value)}>
               <option value="" disabled>
-                Choose a reason
+                {t("order.chooseReason")}
               </option>
               {reasons.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {t(`reason.${item}`)}
                 </option>
               ))}
             </Select>
@@ -89,14 +92,14 @@ export function CustomerOrderActions({
               disabled={pending || !reason}
               onClick={() =>
                 open === "cancel"
-                  ? run(() => cancelMyOrder(orderId, reason), "Your order is cancelled.")
-                  : run(() => requestReturn(orderId, reason), "Return requested.")
+                  ? run(() => cancelMyOrder(orderId, reason), "order.cancelledOk")
+                  : run(() => requestReturn(orderId, reason), "order.returnOk")
               }
             >
-              {pending ? "Please wait…" : open === "cancel" ? "Yes, cancel order" : "Request return"}
+              {pending ? t("common.wait") : open === "cancel" ? t("order.cancelYes") : t("order.requestReturn")}
             </Button>
             <Button variant="ghost" onClick={() => setOpen(null)}>
-              Go back
+              {t("common.back")}
             </Button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { paiseToRupeesInput } from "@toyshop/shared";
+import { paiseToRupeesInput, productTranslationsFromRow } from "@toyshop/shared";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { ProductForm, type ProductFormState } from "@/components/admin/ProductForm";
 import { SavedBanner } from "@/components/admin/SavedBanner";
@@ -30,7 +30,7 @@ export default async function EditProductPage({
       .select("id, storage_path, alt_text, position")
       .eq("product_id", id)
       .order("position"),
-    supabase.from("categories").select("id, name, slug, icon, color, position").order("position"),
+    supabase.from("categories").select("id, name, slug, icon, color, position, translations").order("position"),
   ]);
   if (!product) notFound();
 
@@ -50,6 +50,7 @@ export default async function EditProductPage({
     weightGrams: p.weight_grams ? String(p.weight_grams) : "",
     bisLicense: p.bis_license,
     isFeatured: p.is_featured,
+    translations: productTranslationsFromRow(p.translations),
     images: ((images ?? []) as ProductImage[]).map((image) => ({
       storagePath: image.storage_path,
       altText: image.alt_text,
