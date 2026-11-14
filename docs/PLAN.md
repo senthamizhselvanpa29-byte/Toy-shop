@@ -150,8 +150,8 @@ The launch plan (agreed 14 Nov 2026), one pull request per step:
 
 | Step | What | Result |
 |---|---|---|
-| 0 | Catch up | Owner runs `0006`, merges Milestone 9 |
-| 1 | **Languages** 🌏 (Milestone 10) | English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages |
+| 0 | Catch up | Owner runs `0006_order_management.sql` |
+| 1 | **Languages** 🌏 (Milestone 10) | ✅ Built — English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages. Owner runs `0007_translations.sql`, then merges (this also brings Milestone 9 live) |
 | 2 | **Speed** ⚡ | Vercel functions + Supabase in Mumbai, thumbnails, trimmed middleware, error/loading pages, Speed Insights, before/after report |
 | 3 | **Shop identity & invoices** 🏪 | Shop name, logo, contact, WhatsApp button, announcement bar, pause ordering; invoice numbering, GST mode, signature, notes, PDF; legal pages editor |
 | 4 | **Money** 💰 | Cost price & margin per toy, profit dashboard by period, GST summary, best sellers, CSV export |

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { MESSAGES } from "@toyshop/shared/messages";
 import { CartProvider } from "@/components/cart/CartProvider";
@@ -39,16 +39,21 @@ export default async function ShopLayout({
   const categories = await getCategories(locale);
 
   return (
-    <div lang={locale} className={cn("contents", indicFontClass(locale))}>
-      <I18nProvider locale={locale} messages={MESSAGES[locale]}>
-        <CustomerProvider>
-          <CartProvider>
-            <ShopHeader categories={categories} t={t} />
-            <main className="mx-auto max-w-7xl px-4">{children}</main>
-            <ShopFooter categories={categories} t={t} />
-          </CartProvider>
-        </CustomerProvider>
-      </I18nProvider>
-    </div>
+    <I18nProvider locale={locale} messages={MESSAGES[locale]} className={cn("contents", indicFontClass(locale))}>
+      <CustomerProvider>
+        <CartProvider>
+          <ShopHeader categories={categories} t={t} />
+          <main className="mx-auto max-w-7xl px-4">
+            {/* Keep this keyed Fragment. The page slot depends on error.tsx, whose
+                code can still be loading when React first reaches <main>; React
+                (19.2 canary, bundled with Next.js 15.5) then mis-reads <main> and
+                redraws the whole page. With the Fragment in between, it waits
+                correctly instead. */}
+            <Fragment key="page">{children}</Fragment>
+          </main>
+          <ShopFooter categories={categories} t={t} />
+        </CartProvider>
+      </CustomerProvider>
+    </I18nProvider>
   );
 }
