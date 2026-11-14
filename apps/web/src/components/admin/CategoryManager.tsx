@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CATEGORY_COLORS, type CategoryColor } from "@toyshop/shared";
+import { CATEGORY_COLORS, categoryTranslationsFromRow, type CategoryColor, type CategoryTranslations } from "@toyshop/shared";
 import {
   deleteCategory,
   moveCategory,
@@ -14,7 +14,7 @@ import type { Category } from "@/lib/catalog";
 
 const EMOJI_CHOICES = ["🚗", "🧩", "🧸", "🎨", "📚", "⚽", "🎮", "👶", "🦖", "🚂", "🪀", "🎲", "🛝", "🎵", "🏰", "🔬", "🪁", "🎁"];
 
-type Draft = { name: string; icon: string; color: CategoryColor };
+type Draft = { name: string; icon: string; color: CategoryColor; translations: CategoryTranslations };
 
 export function CategoryManager({
   categories,
@@ -31,7 +31,7 @@ export function CategoryManager({
       {editingId === "new" ? (
         <CategoryEditor
           key="new"
-          initial={{ name: "", icon: "🎁", color: "sunshine" }}
+          initial={{ name: "", icon: "🎁", color: "sunshine", translations: { ta: "", hi: "" } }}
           title="New category"
           onDone={() => setEditingId(null)}
           categoryId={null}
@@ -47,7 +47,12 @@ export function CategoryManager({
           editingId === category.id ? (
             <li key={category.id}>
               <CategoryEditor
-                initial={{ name: category.name, icon: category.icon, color: category.color }}
+                initial={{
+                  name: category.name,
+                  icon: category.icon,
+                  color: category.color,
+                  translations: categoryTranslationsFromRow(category.translations),
+                }}
                 title={`Edit “${category.name}”`}
                 onDone={() => setEditingId(null)}
                 categoryId={category.id}
@@ -160,6 +165,29 @@ function CategoryEditor({
               {...describedBy(nameId, { error: errors.name })}
             />
           </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id={`${nameId}-ta`} label="Name in Tamil" hint="Optional — shown to shoppers who choose தமிழ்">
+              <Input
+                id={`${nameId}-ta`}
+                lang="ta"
+                value={draft.translations.ta}
+                maxLength={60}
+                onChange={(event) => setDraft({ ...draft, translations: { ...draft.translations, ta: event.target.value } })}
+                {...describedBy(`${nameId}-ta`, { hint: "yes" })}
+              />
+            </Field>
+            <Field id={`${nameId}-hi`} label="Name in Hindi" hint="Optional — shown to shoppers who choose हिंदी">
+              <Input
+                id={`${nameId}-hi`}
+                lang="hi"
+                value={draft.translations.hi}
+                maxLength={60}
+                onChange={(event) => setDraft({ ...draft, translations: { ...draft.translations, hi: event.target.value } })}
+                {...describedBy(`${nameId}-hi`, { hint: "yes" })}
+              />
+            </Field>
+          </div>
 
           <fieldset>
             <legend className="font-heading text-lg">Emoji</legend>

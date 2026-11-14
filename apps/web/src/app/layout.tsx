@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Fredoka, Nunito } from "next/font/google";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -16,6 +17,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "Toy Shop",
   description: "Happy toys for happy kids — shop online across India.",
 };

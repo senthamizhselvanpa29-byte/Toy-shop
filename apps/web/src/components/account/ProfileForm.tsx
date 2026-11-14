@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateProfile } from "@/app/(shop)/account/actions";
+import { updateProfile } from "@/app/[locale]/account/actions";
 import { useT } from "@/components/i18n/I18nProvider";
 import { Button, describedBy, Field, Input } from "@/components/ui";
 

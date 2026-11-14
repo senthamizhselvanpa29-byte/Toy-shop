@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { safeNextPath } from "@toyshop/shared";
+import { safeNextPath, type Locale } from "@toyshop/shared";
 import { CustomerLoginForm } from "@/components/account/CustomerLoginForm";
 import { Card } from "@/components/ui";
 import { getT } from "@/lib/i18n";
+import { localePath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -13,13 +14,16 @@ export const metadata: Metadata = {
 };
 
 export default async function CustomerLoginPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: Locale }>;
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
+  const { locale } = await params;
   const { next: rawNext, error } = await searchParams;
-  const next = safeNextPath(rawNext);
-  const t = await getT();
+  const t = getT(locale);
+  const next = rawNext ? safeNextPath(rawNext) : localePath(locale, "/account");
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient();

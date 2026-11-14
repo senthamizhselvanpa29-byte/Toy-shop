@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { formatPaise, MAX_QTY_PER_TOY } from "@toyshop/shared";
 import { QuantityStepper } from "@/components/cart/AddToCart";
 import { OrderSummary } from "@/components/cart/OrderSummary";

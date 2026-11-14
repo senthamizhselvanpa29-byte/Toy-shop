@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { CartLink } from "@/components/cart/CartLink";
 import { useT } from "@/components/i18n/I18nProvider";
 import { useCustomer } from "./CustomerProvider";

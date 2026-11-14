@@ -16,6 +16,11 @@ Built together by the shop owner and Claude.
 | Languages | **Multi-language**, built so any language can be added |
 | Tech | **Next.js + Supabase** (web), **React Native + Expo** (mobile) |
 | Mobile | **Android + iOS** |
+| Languages first | English `/`, **Tamil `/ta`**, **Hindi `/hi`** — separate addresses, so pages are pre-built and shareable in that language |
+| Hosting region | Supabase is in **Ireland** today → move to **Mumbai** before launch (Step 2) |
+| GST | Shop is **not GST-registered** now: invoices show no GST breakup; the owner can switch on a GSTIN or composition scheme later in Settings |
+| Customer login | **Free options only**: email codes + Google login; no paid SMS |
+| Paid plans | Stay on **free plans** while building; the owner decides on Vercel Pro / Supabase Pro at launch |
 
 ---
 
@@ -127,27 +132,33 @@ toy-shop/
 
 ## 8. Roadmap 🗺️
 
+Done so far (each was its own pull request):
+
 | # | Milestone | Result |
 |---|---|---|
-| 1 | Setup | Repo structure, theme, Supabase, deployment pipeline |
-| 2 | Design system | Buttons, cards, forms, mascot, style-guide page |
-| 3 | Owner login + admin layout | Secure single-owner panel |
-| 4 | **Product management** ⭐ | Add/edit/delete products, images, categories |
-| 5 | **Demo products** | About 30 sample toys across all categories |
-| 6 | Storefront | Home, listing, search, filters, product page |
-| 7 | Customer accounts | OTP login, addresses, wishlist |
-| 8 | Cart + checkout + **Razorpay** + COD | Working payments (test mode first) |
-| 9 | Orders | Admin order flow, invoices, customer tracking |
-| 10 | Languages | English + Tamil + Hindi, auto-translate |
-| 11 | Coupons, reviews, dashboard | Extra shop features |
-| 12 | Testing, polish, legal pages | Ready to launch |
-| 13 | **🚀 Web launch** | Live site; owner replaces demo products |
-| 14 | Mobile app | Expo app for shoppers + owner admin with camera upload |
-| 15 | **📱 Store release** | Google Play + Apple App Store |
+| 1 | Setup | ✅ Repo structure, theme, Supabase, Vercel deployment |
+| 2 | Design system | ✅ Buttons, cards, forms, Toby the mascot, style-guide page |
+| 3 | Owner login + admin layout | ✅ Secure single-owner panel |
+| 4 | **Product management** ⭐ | ✅ Add/edit/delete toys, photos, categories |
+| 5 | **Demo toys** | ✅ 30 sample toys across all categories |
+| 6 | Storefront | ✅ Home, listing, search, filters, toy page |
+| 7 | Customer accounts | ✅ Email-code login, addresses, wishlist |
+| 8 | Cart + checkout + **Razorpay** + COD | ✅ Live in test mode |
+| 9 | Orders | ✅ Built — owner runs `0006_order_management.sql`, then merges |
 
-Each milestone is a separate pull request, reviewed before moving on.
+The launch plan (agreed 14 Nov 2026), one pull request per step:
 
----
+| Step | What | Result |
+|---|---|---|
+| 0 | Catch up | Owner runs `0006`, merges Milestone 9 |
+| 1 | **Languages** 🌏 (Milestone 10) | English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages |
+| 2 | **Speed** ⚡ | Vercel functions + Supabase in Mumbai, thumbnails, trimmed middleware, error/loading pages, Speed Insights, before/after report |
+| 3 | **Shop identity & invoices** 🏪 | Shop name, logo, contact, WhatsApp button, announcement bar, pause ordering; invoice numbering, GST mode, signature, notes, PDF; legal pages editor |
+| 4 | **Money** 💰 | Cost price & margin per toy, profit dashboard by period, GST summary, best sellers, CSV export |
+| 5 | **Notifications** 📧 | Order emails to customers (placed, paid, shipped, delivered, cancelled); new-order alerts to the owner (Brevo) |
+| 6 | **Quality gate** 🛡️ | Tests inside the repo + GitHub Actions on every pull request, error & uptime alerts, go-live checklist |
+| 7 | **🚀 Web launch** | Domain, Razorpay live keys + webhook, Google login, real ₹1 test order |
+| 8 | **Growth & mobile** | Coupons, reviews, customers list → Expo app → Play Store / App Store |
 
 ## 9. Needed From the Owner Later
 

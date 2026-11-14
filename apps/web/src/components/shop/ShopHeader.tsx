@@ -1,9 +1,10 @@
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { buttonClasses } from "@/components/ui";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { bgColor, isThemeColor } from "@/components/ui/colors";
 import { cn } from "@/lib/cn";
 import type { Translator } from "@/lib/i18n";
+import { localePath } from "@/lib/locales";
 import type { ShopCategory } from "@/lib/shop";
 import { AccountLink } from "./AccountLink";
 
@@ -18,7 +19,7 @@ export function ShopHeader({ categories, t }: { categories: ShopCategory[]; t: T
           Toy <span className="-ml-1.5 text-bubblegum-dark">Shop</span>
         </Link>
 
-        <form action="/toys" role="search" className="order-last w-full sm:order-none sm:ml-4 sm:w-auto sm:flex-1">
+        <form action={localePath(t.locale, "/toys")} role="search" className="order-last w-full sm:order-none sm:ml-4 sm:w-auto sm:flex-1">
           <label htmlFor="shop-search" className="sr-only">
             {t("header.searchLabel")}
           </label>

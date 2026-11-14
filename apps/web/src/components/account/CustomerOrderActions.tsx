@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cancelMyOrder, requestReturn } from "@/app/(shop)/account/orders/actions";
+import { cancelMyOrder, requestReturn } from "@/app/[locale]/account/orders/actions";
 import { useT } from "@/components/i18n/I18nProvider";
 import { Button, Field, Select } from "@/components/ui";
 import type { ActionResult } from "@/lib/orderAdmin";

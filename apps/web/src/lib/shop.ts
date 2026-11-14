@@ -151,33 +151,50 @@ export function toCardData(product: ShopProduct): ProductCardData {
 // Cached reads (shared by every language)
 // ---------------------------------------------------------------------------
 
+// Saving anything in the owner area (and every order) refreshes this cache
+// straight away; the hourly refresh is only a safety net.
+const CACHE_SECONDS = 3600;
+
+const CATEGORY_FIELDS = "id, name, slug, icon, color, position, translations";
+
+// Until 0007_translations.sql has been run the database has no "translations"
+// column; the shop then simply shows English instead of breaking.
+const UNDEFINED_COLUMN = "42703";
+const withoutTranslations = (fields: string) => fields.replace(/,\s*translations/g, "");
+
+// A failed read throws instead of returning an empty list, so a hiccup is
+// never saved as "the shop has no toys": the last good page stays up.
 const loadCategoryRows = unstable_cache(
   async (): Promise<CategoryRow[]> => {
     if (!isSupabaseConfigured()) return [];
-    const { data } = await publicClient()
-      .from("categories")
-      .select("id, name, slug, icon, color, position, translations")
-      .order("position")
-      .order("name");
-    return (data ?? []) as CategoryRow[];
+    const read = (fields: string) =>
+      publicClient().from("categories").select(fields).order("position").order("name");
+    let { data, error } = await read(CATEGORY_FIELDS);
+    if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read(withoutTranslations(CATEGORY_FIELDS)));
+    if (error) throw new Error(`Couldn't load the categories: ${error.message}`);
+    return (data ?? []) as unknown as CategoryRow[];
   },
   ["shop-categories"],
-  { tags: [CATALOG_TAG], revalidate: 60 },
+  { tags: [CATALOG_TAG], revalidate: CACHE_SECONDS },
 );
 
 const loadProductRows = unstable_cache(
   async (): Promise<Row[]> => {
     if (!isSupabaseConfigured()) return [];
-    const { data } = await publicClient()
-      .from("products")
-      .select(PRODUCT_FIELDS)
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .limit(1000);
+    const read = (fields: string) =>
+      publicClient()
+        .from("products")
+        .select(fields)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+    let { data, error } = await read(PRODUCT_FIELDS);
+    if (error?.code === UNDEFINED_COLUMN) ({ data, error } = await read(withoutTranslations(PRODUCT_FIELDS)));
+    if (error) throw new Error(`Couldn't load the toys: ${error.message}`);
     return (data ?? []) as unknown as Row[];
   },
   ["shop-products"],
-  { tags: [CATALOG_TAG], revalidate: 60 },
+  { tags: [CATALOG_TAG], revalidate: CACHE_SECONDS },
 );
 
 export async function getCategories(locale: Locale = "en"): Promise<ShopCategory[]> {

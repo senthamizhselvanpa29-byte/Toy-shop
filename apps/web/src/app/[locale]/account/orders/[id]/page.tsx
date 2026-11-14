@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { notFound, redirect } from "next/navigation";
 import {
   formatIndianMobile,
@@ -9,6 +9,7 @@ import {
   ORDER_STATUS_LABELS,
   type OrderStatus,
   type ReturnStatus,
+  type Locale,
 } from "@toyshop/shared";
 import { CustomerOrderActions } from "@/components/account/CustomerOrderActions";
 import { PayNowButton } from "@/components/cart/PayNowButton";
@@ -16,6 +17,7 @@ import { buttonClasses, Card } from "@/components/ui";
 import { productImageUrl } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n";
+import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -69,19 +71,19 @@ export default async function OrderPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ locale: Locale; id: string }>;
   searchParams: Promise<{ placed?: string; payment?: string }>;
 }) {
-  const { id } = await params;
+  const { locale, id } = await params;
   const { placed, payment } = await searchParams;
   if (!UUID.test(id)) notFound();
-  const t = await getT();
+  const t = getT(locale);
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/account/login?next=/account/orders/${id}`);
+  if (!user) redirect(loginPath(locale, `/account/orders/${id}`));
 
   const [{ data }, { data: shop }] = await Promise.all([
     supabase

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { redirect } from "next/navigation";
-import { formatPaise, ORDER_STATUS_LABELS, type OrderStatus } from "@toyshop/shared";
+import { formatPaise, ORDER_STATUS_LABELS, type Locale, type OrderStatus } from "@toyshop/shared";
 import { Badge, buttonClasses, Card, TobySays } from "@/components/ui";
 import { getT } from "@/lib/i18n";
+import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,14 @@ const statusColor = {
   cancelled: "ink",
 } as const;
 
-export default async function OrdersPage() {
-  const t = await getT();
+export default async function OrdersPage({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params;
+  const t = getT(locale);
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/account/login?next=/account/orders");
+  if (!user) redirect(loginPath(locale, "/account/orders"));
 
   const { data } = await supabase
     .from("orders")

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import type { ReactNode } from "react";
 import { AGE_GROUPS } from "@toyshop/shared";
 import type { Translator } from "@/lib/i18n";

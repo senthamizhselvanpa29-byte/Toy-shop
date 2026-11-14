@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { useState } from "react";
 import { MAX_QTY_PER_TOY } from "@toyshop/shared";
 import { useT } from "@/components/i18n/I18nProvider";

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import type { Locale } from "@toyshop/shared";
 import type { Address } from "@/components/account/AddressBook";
 import { CheckoutForm } from "@/components/cart/CheckoutForm";
+import { loginPath } from "@/lib/locales";
 import { isRazorpayConfigured } from "@/lib/razorpay";
 import { isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -9,12 +11,13 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Checkout · Toy Shop", robots: { index: false } };
 
-export default async function CheckoutPage() {
+export default async function CheckoutPage({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/account/login?next=/checkout");
+  if (!user) redirect(loginPath(locale, "/checkout"));
 
   const [{ data: profile }, { data: addresses }] = await Promise.all([
     supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),

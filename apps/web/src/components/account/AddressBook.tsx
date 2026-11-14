@@ -7,7 +7,7 @@ import {
   INDIAN_STATES,
   type AddressFormInput,
 } from "@toyshop/shared";
-import { deleteAddress, saveAddress, setDefaultAddress } from "@/app/(shop)/account/actions";
+import { deleteAddress, saveAddress, setDefaultAddress } from "@/app/[locale]/account/actions";
 import { useT } from "@/components/i18n/I18nProvider";
 import { Badge, Button, Card, describedBy, Field, Input, Select, TobySays } from "@/components/ui";
 import { cn } from "@/lib/cn";

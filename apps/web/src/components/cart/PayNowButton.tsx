@@ -3,14 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatPaise } from "@toyshop/shared";
-import { payExistingOrder } from "@/app/(shop)/checkout/actions";
+import { payExistingOrder } from "@/app/[locale]/checkout/actions";
 import { useT } from "@/components/i18n/I18nProvider";
+import { localePath } from "@/lib/locales";
 import { Button } from "@/components/ui";
 import { payWithRazorpay } from "./razorpayCheckout";
 
 export function PayNowButton({ orderId, totalPaise }: { orderId: string; totalPaise: number }) {
   const router = useRouter();
-  const { t } = useT();
+  const { t, locale } = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,7 +31,7 @@ export function PayNowButton({ orderId, totalPaise }: { orderId: string; totalPa
           }
           const outcome = await payWithRazorpay(orderId, result.razorpay);
           setBusy(false);
-          router.replace(`/account/orders/${orderId}?${outcome === "paid" ? "placed=1" : `payment=${outcome}`}`);
+          router.replace(localePath(locale, `/account/orders/${orderId}?${outcome === "paid" ? "placed=1" : `payment=${outcome}`}`));
           router.refresh();
         }}
       >

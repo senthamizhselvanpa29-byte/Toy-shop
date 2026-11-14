@@ -1,4 +1,5 @@
 import { paiseToRupeesInput } from "@toyshop/shared";
+import { RefreshShopButton } from "@/components/admin/RefreshShopButton";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { Card } from "@/components/ui";
 import { getShopSettings } from "@/lib/orders";
@@ -64,6 +65,15 @@ export default async function SettingsPage() {
             when you&apos;re ready to sell.
           </p>
         )}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-2xl">⚡ Shop pages</h2>
+        <p className="text-ink-soft">
+          Your shop pages are kept ready-made so they open fast. They update by themselves whenever you save a toy, a
+          category or a setting here. If something ever looks out of date, tap this button.
+        </p>
+        <RefreshShopButton />
       </Card>
 
       <SettingsForm

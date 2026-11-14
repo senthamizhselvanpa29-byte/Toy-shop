@@ -1,27 +1,37 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { notFound } from "next/navigation";
-import { formatPaise } from "@toyshop/shared";
+import { formatPaise, type Locale } from "@toyshop/shared";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { WishlistButton } from "@/components/shop/WishlistButton";
 import { AgeBadge, Badge, Card, PriceTag, type ThemeColor } from "@/components/ui";
 import { getT } from "@/lib/i18n";
-import { getProductBySlug, getRelatedProducts } from "@/lib/shop";
+import { alternatesFor } from "@/lib/seo";
+import { getAllProductSlugs, getProductBySlug, getRelatedProducts } from "@/lib/shop";
 
-type Props = { params: Promise<{ slug: string }> };
+export const revalidate = 3600;
+
+type Props = { params: Promise<{ locale: Locale; slug: string }> };
+
+// Toy pages are built ahead of time and refreshed whenever the owner saves a toy.
+export async function generateStaticParams() {
+  const products = await getAllProductSlugs();
+  return products.map((product) => ({ slug: product.slug }));
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const t = await getT();
-  const product = await getProductBySlug(slug, t.locale);
+  const { locale, slug } = await params;
+  const t = getT(locale);
+  const product = await getProductBySlug(slug, locale);
   if (!product) return { title: `${t("product.notFound")} · Toy Shop` };
   const description =
     product.shortDescription || product.description.slice(0, 150) || `${product.name} at Toy Shop`;
   return {
     title: `${product.name} · Toy Shop`,
     description,
+    alternates: alternatesFor(locale, `/toys/${slug}`),
     openGraph: {
       title: product.name,
       description,
@@ -31,12 +41,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const { slug } = await params;
-  const t = await getT();
-  const product = await getProductBySlug(slug, t.locale);
+  const { locale, slug } = await params;
+  const t = getT(locale);
+  const product = await getProductBySlug(slug, locale);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product, t.locale);
+  const related = await getRelatedProducts(product, locale);
   const outOfStock = product.stock <= 0;
   const lowStock = !outOfStock && product.stock <= 5;
   const ageLabel = t(`age.${product.ageGroup}`);

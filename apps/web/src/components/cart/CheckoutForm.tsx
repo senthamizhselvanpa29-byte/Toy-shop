@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { formatIndianMobile, formatPaise } from "@toyshop/shared";
-import { placeOrder } from "@/app/(shop)/checkout/actions";
+import { placeOrder } from "@/app/[locale]/checkout/actions";
 import { AddressBook, type Address } from "@/components/account/AddressBook";
 import { useT } from "@/components/i18n/I18nProvider";
+import { localePath } from "@/lib/locales";
 import { Badge, Button, Card, TobyLoader, TobySays, buttonClasses } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { OrderSummary } from "./OrderSummary";
@@ -24,7 +25,7 @@ type Props = {
 
 export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayment, orderingEnabled }: Props) {
   const router = useRouter();
-  const { t } = useT();
+  const { t, locale } = useT();
   const { quote, loading, notices, cart, refresh } = useQuote();
   const preferredAddress = addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? "";
   const [addressId, setAddressId] = useState(preferredAddress);
@@ -84,7 +85,7 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
 
       const placed = () => {
         cart.clear();
-        router.push(`/account/orders/${result.orderId}?placed=1`);
+        router.push(localePath(locale, `/account/orders/${result.orderId}?placed=1`));
       };
       if (chosenMethod === "cod") return placed();
       if (!result.razorpay) {

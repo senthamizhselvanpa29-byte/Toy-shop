@@ -6,6 +6,7 @@ import { ProductForm, type ProductFormState } from "@/components/admin/ProductFo
 import { SavedBanner } from "@/components/admin/SavedBanner";
 import { Button, Card } from "@/components/ui";
 import type { Category, Product, ProductImage } from "@/lib/catalog";
+import { isAutoTranslateConfigured } from "@/lib/autoTranslate";
 import { createClient } from "@/lib/supabase/server";
 import { deleteProduct, duplicateProduct } from "../actions";
 
@@ -76,7 +77,7 @@ export default async function EditProductPage({
       )}
 
       {/* key resets the form after each save so it shows the saved values */}
-      <ProductForm
+      <ProductForm autoTranslate={isAutoTranslateConfigured()}
         key={p.updated_at}
         productId={p.id}
         photoFolderId={p.id}

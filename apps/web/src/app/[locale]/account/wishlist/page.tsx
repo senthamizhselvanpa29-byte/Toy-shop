@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { redirect } from "next/navigation";
+import type { Locale } from "@toyshop/shared";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { buttonClasses, TobySays } from "@/components/ui";
 import { getT } from "@/lib/i18n";
+import { loginPath } from "@/lib/locales";
 import { getWishlistProducts } from "@/lib/shop";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My wishlist · Toy Shop", robots: { index: false } };
 
-export default async function WishlistPage() {
-  const t = await getT();
+export default async function WishlistPage({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params;
+  const t = getT(locale);
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/account/login?next=/account/wishlist");
+  if (!user) redirect(loginPath(locale, "/account/wishlist"));
 
   const products = await getWishlistProducts(supabase, user.id, t.locale);
 

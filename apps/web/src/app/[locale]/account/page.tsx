@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { redirect } from "next/navigation";
-import { formatIndianMobile } from "@toyshop/shared";
+import { formatIndianMobile, type Locale } from "@toyshop/shared";
 import { AddressBook, type Address } from "@/components/account/AddressBook";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { Card } from "@/components/ui";
 import { getT } from "@/lib/i18n";
+import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My account · Toy Shop", robots: { index: false } };
 
-export default async function AccountPage() {
-  const t = await getT();
+export default async function AccountPage({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params;
+  const t = getT(locale);
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/account/login");
+  if (!user) redirect(loginPath(locale, "/account"));
 
   const [{ data: profile }, { data: addresses }, { count: wishlistCount }, { count: orderCount }] = await Promise.all([
     supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),

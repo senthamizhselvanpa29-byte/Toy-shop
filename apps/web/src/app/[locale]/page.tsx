@@ -1,16 +1,29 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { AGE_GROUPS } from "@toyshop/shared";
+import { AGE_GROUPS, type Locale } from "@toyshop/shared";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { buttonClasses, CategoryTile, TobySays } from "@/components/ui";
 import { getT } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/seo";
 import { getCategories, getHomeSections } from "@/lib/shop";
 
 const ageStyles = ["bg-bubblegum", "bg-sunshine", "bg-mint", "bg-sky", "bg-grape"];
 const ageEmoji = ["👶", "🧒", "👧", "🧑", "🧑‍🎓"];
 
-export default async function HomePage() {
-  const t = await getT();
+// Built ahead of time; refreshed when the owner saves a toy, and at least hourly.
+export const revalidate = 3600;
+
+type Props = { params: Promise<{ locale: Locale }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  return { alternates: alternatesFor(locale, "/") };
+}
+
+export default async function HomePage({ params }: Props) {
+  const { locale } = await params;
+  const t = getT(locale);
   const [categories, sections] = await Promise.all([getCategories(t.locale), getHomeSections(t.locale)]);
 
   return (

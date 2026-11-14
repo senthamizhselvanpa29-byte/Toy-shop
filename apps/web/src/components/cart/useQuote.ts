@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Quote } from "@/lib/orders";
-import { quoteCheckout } from "@/app/(shop)/checkout/actions";
+import { quoteCheckout } from "@/app/[locale]/checkout/actions";
 import { useT } from "@/components/i18n/I18nProvider";
 import { useCart } from "./CartProvider";
 
@@ -10,7 +10,7 @@ import { useCart } from "./CartProvider";
 // sold out or there are fewer left, the cart is corrected and `notices` says why.
 export function useQuote() {
   const cart = useCart();
-  const { t } = useT();
+  const { t, locale } = useT();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState<string[]>([]);
@@ -26,7 +26,7 @@ export function useQuote() {
     }
     const id = ++request.current;
     setLoading(true);
-    quoteCheckout(cart.lines).then((result) => {
+    quoteCheckout(cart.lines, locale).then((result) => {
       if (id !== request.current) return;
       const changes: string[] = [];
       for (const line of result.lines) {

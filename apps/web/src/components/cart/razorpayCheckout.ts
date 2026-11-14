@@ -1,6 +1,6 @@
 "use client";
 
-import type { RazorpayCheckout } from "@/app/(shop)/checkout/actions";
+import type { RazorpayCheckout } from "@/app/[locale]/checkout/actions";
 
 type RazorpayResponse = {
   razorpay_payment_id: string;

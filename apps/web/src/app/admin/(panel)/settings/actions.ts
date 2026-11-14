@@ -21,6 +21,14 @@ export type SettingsInput = {
 
 const GSTIN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
+// Shop pages are kept ready-made so they open fast. Saving anything in the
+// owner area rebuilds them; this does the same by hand.
+export async function refreshShopPages(): Promise<{ ok: true }> {
+  await requireOwner();
+  refreshCatalog();
+  return { ok: true };
+}
+
 export async function saveShopSettings(input: SettingsInput): Promise<{ errors?: Record<string, string>; ok?: boolean }> {
   const { supabase } = await requireOwner();
   const errors: Record<string, string> = {};

@@ -11,8 +11,11 @@ import {
   slugify,
   type ProductFormInput,
   type ProductStatus,
+  type ProductTexts,
+  type ProductTranslations,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { AutoTranslateError, isAutoTranslateConfigured, translateToTamilAndHindi } from "@/lib/autoTranslate";
 import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
 import { refreshCatalog } from "@/lib/revalidate";
 
@@ -147,6 +150,30 @@ export async function saveProduct(
 
   refreshShopPages(id);
   redirect(`/admin/products/${id}?saved=${status === "published" ? "published" : "1"}`);
+}
+
+// ✨ Auto-translate: Tamil and Hindi words for a toy, written by Claude from the
+// owner's English. Only works when ANTHROPIC_API_KEY is set (in Vercel).
+export async function autoTranslateProduct(
+  texts: ProductTexts,
+): Promise<{ translations: ProductTranslations } | { error: string }> {
+  await requireOwner();
+  if (!isAutoTranslateConfigured()) {
+    return { error: "Auto-translate isn't switched on. Add ANTHROPIC_API_KEY in Vercel to use it." };
+  }
+  const english: ProductTexts = {
+    name: String(texts.name ?? "").trim().slice(0, 120),
+    shortDescription: String(texts.shortDescription ?? "").trim().slice(0, 200),
+    description: String(texts.description ?? "").trim().slice(0, 5000),
+  };
+  if (!english.name) return { error: "Type the English toy name first." };
+  try {
+    return { translations: await translateToTamilAndHindi(english) };
+  } catch (error) {
+    return {
+      error: error instanceof AutoTranslateError ? error.message : "Couldn't translate right now. Please try again.",
+    };
+  }
 }
 
 export async function duplicateProduct(productId: string) {

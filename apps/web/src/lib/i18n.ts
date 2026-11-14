@@ -1,27 +1,15 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { AGE_GROUPS, DEFAULT_LOCALE, isLocale, LOCALE_TAGS, MESSAGES, translate, type Locale } from "@toyshop/shared";
+import { AGE_GROUPS, LOCALE_TAGS, MESSAGES, translate, type Locale } from "@toyshop/shared";
 import type { CardLabels } from "@/components/ui";
-
-export const LOCALE_COOKIE = "toyshop-locale";
-
-// The shopper's chosen language (remembered in a cookie), English by default.
-export async function getLocale(): Promise<Locale> {
-  const value = (await cookies()).get(LOCALE_COOKIE)?.value;
-  return isLocale(value) ? value : DEFAULT_LOCALE;
-}
 
 export type Translator = ((key: string, vars?: Record<string, string | number>) => string) & {
   locale: Locale;
   tag: string;
 };
 
-export async function getT(): Promise<Translator> {
-  const locale = await getLocale();
-  return makeT(locale);
-}
-
-export function makeT(locale: Locale): Translator {
+// Words for one language. Shop pages get the language from their address
+// ("/ta/toys" → "ta"); English pages have no prefix.
+export function getT(locale: Locale): Translator {
   const t = ((key: string, vars?: Record<string, string | number>) =>
     translate(MESSAGES[locale], key, vars)) as Translator;
   t.locale = locale;

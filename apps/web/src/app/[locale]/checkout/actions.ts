@@ -1,7 +1,7 @@
 "use server";
 
 import type { CartLine } from "@toyshop/shared";
-import { getLocale } from "@/lib/i18n";
+import { isLocale } from "@/lib/locales";
 import { quoteCart, type Quote } from "@/lib/orders";
 import { createRazorpayOrder, isRazorpayConfigured, razorpayKeyId } from "@/lib/razorpay";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
@@ -20,9 +20,9 @@ export type PlaceOrderResult =
   | { error: string; quote?: Quote }
   | { orderId: string; razorpay?: RazorpayCheckout };
 
-export async function quoteCheckout(cart: CartLine[]): Promise<Quote> {
+export async function quoteCheckout(cart: CartLine[], locale = "en"): Promise<Quote> {
   const supabase = await createClient();
-  return quoteCart(supabase, cart, await getLocale());
+  return quoteCart(supabase, cart, isLocale(locale) ? locale : "en");
 }
 
 export async function placeOrder(input: {

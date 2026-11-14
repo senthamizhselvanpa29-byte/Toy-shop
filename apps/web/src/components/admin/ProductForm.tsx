@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import {
   AGE_GROUPS,
+  CONTENT_LOCALES,
   EMPTY_PRODUCT_TRANSLATIONS,
   GST_RATES,
   parseRupeesToPaise,
   type AgeGroup,
+  type ContentLocale,
   type ProductStatus,
+  type ProductTexts,
   type ProductTranslations,
 } from "@toyshop/shared";
 import {
@@ -22,7 +25,7 @@ import {
   Textarea,
   type ThemeColor,
 } from "@/components/ui";
-import { saveProduct } from "@/app/admin/(panel)/products/actions";
+import { autoTranslateProduct, saveProduct } from "@/app/admin/(panel)/products/actions";
 import { cn } from "@/lib/cn";
 import { productImageUrl, STATUS_LABELS, type Category } from "@/lib/catalog";
 import { PhotoManager, type PhotoItem } from "./PhotoManager";
@@ -72,7 +75,12 @@ type ProductFormProps = {
   status: ProductStatus | null;
   initial: ProductFormState;
   categories: Category[];
+  // Whether the ✨ Auto-translate button is available (needs ANTHROPIC_API_KEY).
+  autoTranslate?: boolean;
 };
+
+const LANGUAGE_LABELS: Record<ContentLocale, string> = { ta: "Tamil", hi: "Hindi" };
+const LANGUAGE_NAMES: Record<ContentLocale, string> = { ta: "தமிழ்", hi: "हिंदी" };
 
 export function ProductForm({
   productId,
@@ -80,12 +88,15 @@ export function ProductForm({
   status,
   initial,
   categories,
+  autoTranslate = false,
 }: ProductFormProps) {
   const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [pending, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translateNote, setTranslateNote] = useState<string | null>(null);
 
   const dirty = useMemo(
     () => JSON.stringify(values) !== JSON.stringify(initial),
@@ -109,6 +120,37 @@ export function ProductForm({
         return next;
       });
     }
+  }
+
+  function setTranslation(locale: ContentLocale, field: keyof ProductTexts, value: string) {
+    setValues((current) => ({
+      ...current,
+      translations: {
+        ...current.translations,
+        [locale]: { ...current.translations[locale], [field]: value },
+      },
+    }));
+  }
+
+  async function runAutoTranslate() {
+    setTranslateNote(null);
+    if (!values.name.trim()) {
+      setTranslateNote("Type the English toy name first.");
+      return;
+    }
+    setTranslating(true);
+    const result = await autoTranslateProduct({
+      name: values.name,
+      shortDescription: values.shortDescription,
+      description: values.description,
+    });
+    setTranslating(false);
+    if ("error" in result) {
+      setTranslateNote(result.error);
+      return;
+    }
+    setValues((current) => ({ ...current, translations: result.translations }));
+    setTranslateNote("Done! Please read the words once before publishing.");
   }
 
   function submit(nextStatus: ProductStatus | "keep") {
@@ -260,7 +302,68 @@ export function ProductForm({
           </Field>
         </Section>
 
-        <Section step={5} title="More details" hint="Optional, but useful for invoices and shipping.">
+        <Section
+          step={5}
+          title="Other languages 🌏"
+          hint="Shoppers who choose தமிழ் or हिंदी see these words. Leave a box empty to show the English instead."
+        >
+          {autoTranslate && (
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" variant="secondary" size="sm" disabled={translating || busy} onClick={runAutoTranslate}>
+                {translating ? "Translating…" : "✨ Auto-translate from English"}
+              </Button>
+              {translateNote && (
+                <p role="status" className="text-sm font-bold text-ink-soft">
+                  {translateNote}
+                </p>
+              )}
+            </div>
+          )}
+          {errors.translations && (
+            <p role="alert" className="font-bold text-bubblegum-dark">
+              {errors.translations}
+            </p>
+          )}
+          <div className="grid gap-5 lg:grid-cols-2">
+            {CONTENT_LOCALES.map((locale) => (
+              <fieldset key={locale} className="flex flex-col gap-4 rounded-2xl border-2 border-ink/10 p-4">
+                <legend className="px-1 font-heading text-lg">
+                  <span lang={locale}>{LANGUAGE_NAMES[locale]}</span> · {LANGUAGE_LABELS[locale]}
+                </legend>
+                <Field id={`field-${locale}-name`} label={`Name in ${LANGUAGE_LABELS[locale]}`}>
+                  <Input
+                    id={`field-${locale}-name`}
+                    lang={locale}
+                    value={values.translations[locale].name}
+                    maxLength={120}
+                    onChange={(event) => setTranslation(locale, "name", event.target.value)}
+                  />
+                </Field>
+                <Field id={`field-${locale}-shortDescription`} label={`Summary in ${LANGUAGE_LABELS[locale]}`}>
+                  <Input
+                    id={`field-${locale}-shortDescription`}
+                    lang={locale}
+                    value={values.translations[locale].shortDescription}
+                    maxLength={200}
+                    onChange={(event) => setTranslation(locale, "shortDescription", event.target.value)}
+                  />
+                </Field>
+                <Field id={`field-${locale}-description`} label={`Description in ${LANGUAGE_LABELS[locale]}`}>
+                  <Textarea
+                    id={`field-${locale}-description`}
+                    lang={locale}
+                    rows={4}
+                    maxLength={5000}
+                    value={values.translations[locale].description}
+                    onChange={(event) => setTranslation(locale, "description", event.target.value)}
+                  />
+                </Field>
+              </fieldset>
+            ))}
+          </div>
+        </Section>
+
+        <Section step={6} title="More details" hint="Optional, but useful for invoices and shipping.">
           <div className="grid gap-5 sm:grid-cols-2">
             <Field id="field-brand" label="Brand" error={errors.brand}>
               <Input {...text("brand")} maxLength={60} />

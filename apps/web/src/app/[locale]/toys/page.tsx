@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { Suspense, type ReactNode } from "react";
-import { AGE_GROUPS } from "@toyshop/shared";
+import { AGE_GROUPS, type Locale } from "@toyshop/shared";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { buttonClasses, TobySays } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n";
+import { alternatesFor } from "@/lib/seo";
 import { browseProducts, getCategories, PRICE_RANGES, SORTS } from "@/lib/shop";
 
 type Params = { q?: string; category?: string; age?: string; price?: string; stock?: string; sort?: string; page?: string };
+type Props = { params: Promise<{ locale: Locale }>; searchParams: Promise<Params> };
 
-export async function generateMetadata({ searchParams }: { searchParams: Promise<Params> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const { q, category } = await searchParams;
-  const t = await getT();
+  const t = getT(locale);
   const categories = category ? await getCategories(t.locale) : [];
   const name = categories.find((item) => item.slug === category)?.name;
-  return { title: `${q ? `“${q}”` : name ?? t("header.allToys")} · Toy Shop` };
+  return {
+    title: `${q ? `“${q}”` : name ?? t("header.allToys")} · Toy Shop`,
+    // Search results are not for search engines.
+    robots: q ? { index: false } : undefined,
+    alternates: alternatesFor(locale, category ? `/toys?category=${encodeURIComponent(category)}` : "/toys"),
+  };
 }
 
-export default async function ToysPage({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function ToysPage({ params: routeParams, searchParams }: Props) {
+  const { locale } = await routeParams;
   const params = await searchParams;
-  const t = await getT();
+  const t = getT(locale);
   const filters = {
     q: params.q?.trim() || undefined,
     category: params.category || undefined,

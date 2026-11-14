@@ -342,6 +342,11 @@ export const en = {
   "notFound.back": "Back to the toys",
   "notFound.text": "It may have moved, or the toy is no longer in the shop.",
 
+  // Something went wrong
+  "error.title": "Oops! Something went wrong",
+  "error.text": "Toby tripped over a toy. Please try again in a moment.",
+  "error.retry": "Try again",
+
   // Form checks
   "v.mobile": "Enter a 10-digit Indian mobile number",
   "v.receiver": "Please enter the receiver's name",
