@@ -30,3 +30,37 @@
 .indic-headings {
   --font-heading: "Rupee Sign", var(--font-fredoka), var(--font-indic), system-ui, sans-serif;
 }
+
+/* The thin bar at the top of the screen while the next page loads
+   (components/shop/NavigationProgress.tsx). It waits a moment before it
+   appears, so pages that open instantly don't flash it. */
+@keyframes nav-progress-show {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nav-progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.nav-progress {
+  opacity: 0;
+  animation: nav-progress-show 0.2s ease-out 0.12s forwards;
+}
+
+.nav-progress > div {
+  animation: nav-progress-slide 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress > div {
+    animation: none;
+    width: 100%;
+  }
+}

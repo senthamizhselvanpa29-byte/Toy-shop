@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { LOCALE_NAMES, type Locale } from "@toyshop/shared";
+import { LinkPending } from "@/components/shop/NavigationProgress";
 import { cn } from "@/lib/cn";
 import { LOCALE_COOKIE, LOCALES, localePath, stripLocale } from "@/lib/locales";
 import { useT } from "./I18nProvider";
@@ -52,6 +53,7 @@ export function LanguageSwitcher() {
             )}
           >
             {item === "en" ? "EN" : LOCALE_NAMES[item]}
+            <LinkPending />
           </Link>
         );
       })}

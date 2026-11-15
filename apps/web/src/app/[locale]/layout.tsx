@@ -5,6 +5,7 @@ import { MESSAGES } from "@toyshop/shared/messages";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { CustomerProvider } from "@/components/shop/CustomerProvider";
+import { NavigationProgress } from "@/components/shop/NavigationProgress";
 import { ShopFooter } from "@/components/shop/ShopFooter";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { cn } from "@/lib/cn";
@@ -42,6 +43,7 @@ export default async function ShopLayout({
     <I18nProvider locale={locale} messages={MESSAGES[locale]} className={cn("contents", indicFontClass(locale))}>
       <CustomerProvider>
         <CartProvider>
+          <NavigationProgress />
           <ShopHeader categories={categories} t={t} />
           <main className="mx-auto max-w-7xl px-4">
             {/* Keep this keyed Fragment. The page slot depends on error.tsx, whose

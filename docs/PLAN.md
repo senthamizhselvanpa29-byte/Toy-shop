@@ -144,21 +144,42 @@ Done so far (each was its own pull request):
 | 6 | Storefront | ✅ Home, listing, search, filters, toy page |
 | 7 | Customer accounts | ✅ Email-code login, addresses, wishlist |
 | 8 | Cart + checkout + **Razorpay** + COD | ✅ Live in test mode |
-| 9 | Orders | ✅ Built — owner runs `0006_order_management.sql`, then merges |
+| 9 | Orders | ✅ Live — order management, invoices, cancellations and returns |
 
 The launch plan (agreed 14 Nov 2026), one pull request per step:
 
 | Step | What | Result |
 |---|---|---|
-| 0 | Catch up | Owner runs `0006_order_management.sql` |
-| 1 | **Languages** 🌏 (Milestone 10) | ✅ Built — English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages. Owner runs `0007_translations.sql`, then merges (this also brings Milestone 9 live) |
-| 2 | **Speed** ⚡ | Vercel functions + Supabase in Mumbai, thumbnails, trimmed middleware, error/loading pages, Speed Insights, before/after report |
+| 0 | Catch up | ✅ Done — owner ran `0006_order_management.sql` |
+| 1 | **Languages** 🌏 (Milestone 10) | ✅ Live — English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages |
+| 2 | **Speed** ⚡ | ✅ Built — see "Step 2 results" below. Owner still chooses the hosting region (Mumbai), switches on Speed Insights and presses "⚡ Speed up photos" on toys with older photos |
 | 3 | **Shop identity & invoices** 🏪 | Shop name, logo, contact, WhatsApp button, announcement bar, pause ordering; invoice numbering, GST mode, signature, notes, PDF; legal pages editor |
 | 4 | **Money** 💰 | Cost price & margin per toy, profit dashboard by period, GST summary, best sellers, CSV export |
 | 5 | **Notifications** 📧 | Order emails to customers (placed, paid, shipped, delivered, cancelled); new-order alerts to the owner (Brevo) |
 | 6 | **Quality gate** 🛡️ | Tests inside the repo + GitHub Actions on every pull request, error & uptime alerts, go-live checklist |
 | 7 | **🚀 Web launch** | Domain, Razorpay live keys + webhook, Google login, real ₹1 test order |
 | 8 | **Growth & mobile** | Coupons, reviews, customers list → Expo app → Play Store / App Store |
+
+### Step 2 results ⚡
+
+What changed:
+
+- **Photos in three sizes.** Each uploaded photo is saved as large (1600px), medium (800px) and small (400px). Phones and cards get the small or medium copy; only big, sharp screens get the large one. Toys with older single-size photos show a "⚡ Speed up photos" button on their edit page.
+- **Lighter pages for visitors.** The sign-in/database code (about 70 KB) is only downloaded for shoppers who are logged in.
+- **Fewer font files.** The ₹ sign no longer makes every page download extra font files.
+- **A progress bar** at the top of the screen while the next page loads, on every shop page, so a tap always shows something at once. (Next.js `loading.tsx` screens were tried first and removed: with them, pages sometimes didn't show fresh data after a save until they were reloaded, and missing pages answered "200 OK" instead of "404". Don't add them back without re-running the checks.)
+- **Speed Insights** (Vercel) reports the speed real visitors get, once switched on in the Vercel dashboard.
+
+Measured on a simulated mid-range phone on slow 4G with an empty cache (same toys and photos before and after):
+
+| Page | Download before → after | Usable before → after | Main picture before → after |
+|---|---|---|---|
+| Home | 846 KB → 286 KB | 3.5 s → 2.0 s | 0.9 s → 0.8 s |
+| All toys | 1,389 KB → 398 KB | 3.9 s → 2.2 s | 5.8 s → 1.5 s |
+| Toy page | 732 KB → 369 KB | 3.2 s → 2.2 s | 3.7 s → 2.1 s |
+| Home (Tamil) | 946 KB → 329 KB | 4.2 s → 2.3 s | 0.9 s → 0.8 s |
+
+Still to gain: account, cart and checkout pages talk to the database, which is in Ireland while the website's servers default to the USA. Putting both in Mumbai (or at least side by side) is the owner's choice in the Vercel and Supabase dashboards.
 
 ## 9. Needed From the Owner Later
 

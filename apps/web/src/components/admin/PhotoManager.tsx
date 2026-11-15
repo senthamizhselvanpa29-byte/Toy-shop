@@ -16,9 +16,11 @@ type Storage = ReturnType<typeof createClient>;
 async function uploadPhoto(supabase: Storage, folderId: string, source: Blob): Promise<string> {
   const { extension, copies } = await compressImage(source);
   const base = `products/${folderId}/${crypto.randomUUID()}`;
+  const bucket = supabase.storage.from(PRODUCT_IMAGES_BUCKET);
+  const paths = copies.map(({ key }) => `${base}-${key}.${extension}`);
   const results = await Promise.all(
-    copies.map(({ key, blob }) =>
-      supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(`${base}-${key}.${extension}`, blob, {
+    copies.map(({ blob }, index) =>
+      bucket.upload(paths[index], blob, {
         contentType: blob.type,
         // File names are never reused, so browsers may keep photos for a year.
         cacheControl: "31536000",
@@ -26,7 +28,11 @@ async function uploadPhoto(supabase: Storage, folderId: string, source: Blob): P
     ),
   );
   const failed = results.find((result) => result.error);
-  if (failed?.error) throw failed.error;
+  if (failed?.error) {
+    // Don't leave half a photo behind.
+    await bucket.remove(paths).catch(() => {});
+    throw failed.error;
+  }
   return `${base}-l.${extension}`;
 }
 
