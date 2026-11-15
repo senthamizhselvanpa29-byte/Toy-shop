@@ -338,6 +338,7 @@ export const en = {
   "common.saving": "Saving…",
   "common.saved": "Saved",
   "common.wait": "Please wait…",
+  "common.loading": "Loading…",
   "common.back": "Go back",
 
   // Page not found

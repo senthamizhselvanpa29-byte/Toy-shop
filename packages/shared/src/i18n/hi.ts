@@ -315,6 +315,7 @@ export const hi: Record<MessageKey, string> = {
   "common.saving": "सेव हो रहा है…",
   "common.saved": "सेव हो गया",
   "common.wait": "कृपया रुकें…",
+  "common.loading": "लोड हो रहा है…",
   "common.back": "वापस जाएँ",
 
   "notFound.title": "ओह! टोबी को वह पेज नहीं मिला",

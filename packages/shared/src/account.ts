@@ -1,4 +1,5 @@
-import { z } from "zod";
+// Addresses and phone numbers: plain helpers that are safe (and small) to load
+// in the browser. The form rules live in accountForms.ts, which the server uses.
 
 export const INDIAN_STATES = [
   "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
@@ -25,55 +26,6 @@ export function formatIndianMobile(e164: string): string {
   const digits = e164.replace(/^\+91/, "");
   return digits.length === 10 ? `+91 ${digits.slice(0, 5)} ${digits.slice(5)}` : e164;
 }
-
-const mobile = z
-  .string()
-  .trim()
-  .transform((value, ctx) => {
-    const normalized = normalizeIndianMobile(value);
-    if (!normalized) {
-      ctx.addIssue({ code: "custom", message: "v.mobile" });
-      return z.NEVER;
-    }
-    return normalized;
-  });
-
-// Error messages are translation keys (see i18n/en.ts "v.*").
-export const addressFormSchema = z.object({
-  label: z.enum(ADDRESS_LABELS).default("Home"),
-  fullName: z.string().trim().min(2, "v.receiver").max(80),
-  phone: mobile,
-  line1: z.string().trim().min(3, "v.line1").max(120),
-  line2: z.string().trim().max(120).default(""),
-  landmark: z.string().trim().max(80).default(""),
-  city: z.string().trim().min(2, "v.city").max(60),
-  state: z.enum(INDIAN_STATES, { message: "v.state" }),
-  pincode: z
-    .string()
-    .trim()
-    .regex(/^[1-9]\d{5}$/, "v.pincode"),
-  isDefault: z.boolean().default(false),
-});
-
-export type AddressFormInput = z.input<typeof addressFormSchema>;
-
-export const profileFormSchema = z.object({
-  fullName: z.string().trim().max(80).default(""),
-  phone: z
-    .string()
-    .trim()
-    .transform((value, ctx) => {
-      if (value === "") return null;
-      const normalized = normalizeIndianMobile(value);
-      if (!normalized) {
-        ctx.addIssue({ code: "custom", message: "v.mobile" });
-        return z.NEVER;
-      }
-      return normalized;
-    }),
-});
-
-export type ProfileFormInput = z.input<typeof profileFormSchema>;
 
 // Only allow redirects to pages on this site (never "//evil.com").
 export function safeNextPath(next: string | null | undefined, fallback = "/account"): string {

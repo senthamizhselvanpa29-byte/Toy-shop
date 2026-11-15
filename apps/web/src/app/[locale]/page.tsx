@@ -9,7 +9,9 @@ import { alternatesFor } from "@/lib/seo";
 import { getCategories, getHomeSections } from "@/lib/shop";
 
 const ageStyles = ["bg-bubblegum", "bg-sunshine", "bg-mint", "bg-sky", "bg-grape"];
-const ageEmoji = ["👶", "🧒", "👧", "🧑", "🧑‍🎓"];
+// Single-character emoji only: combined ones (like "student") contain an
+// invisible joiner that makes browsers download extra font files.
+const ageEmoji = ["👶", "🧒", "👧", "🧑", "🎓"];
 
 // Built ahead of time; refreshed when the owner saves a toy, and at least hourly.
 export const revalidate = 3600;

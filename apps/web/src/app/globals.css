@@ -28,5 +28,5 @@
    app/[locale]/fonts.ts. A CSS variable is worked out where it is declared,
    so the heading stack has to be declared again on the page wrapper. */
 .indic-headings {
-  --font-heading: var(--font-fredoka), var(--font-indic), system-ui, sans-serif;
+  --font-heading: "Rupee Sign", var(--font-fredoka), var(--font-indic), system-ui, sans-serif;
 }

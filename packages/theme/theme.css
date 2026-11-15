@@ -18,8 +18,10 @@
 
   --radius-bubble: 28px;
 
-  --font-heading: var(--font-fredoka), system-ui, sans-serif;
-  --font-body: var(--font-nunito), system-ui, sans-serif;
+  /* "Rupee Sign" (defined at the bottom of this file) comes first so the ₹
+     symbol never makes the browser download extra font files. */
+  --font-heading: "Rupee Sign", var(--font-fredoka), system-ui, sans-serif;
+  --font-body: "Rupee Sign", var(--font-nunito), system-ui, sans-serif;
 
   --shadow-soft: 0 6px 0 rgb(43 42 76 / 0.12);
 
@@ -30,4 +32,18 @@
     25% { transform: rotate(-4deg); }
     75% { transform: rotate(4deg); }
   }
+}
+
+/* The ₹ sign is not in the basic (Latin) files of Fredoka and Nunito. Left
+   alone, every page with a price downloads their "extended" files as well —
+   about 45 KB on English pages and 100 KB on Tamil/Hindi pages — for this one
+   character. Drawing ₹ with a font the device already has avoids that.
+   If none of these fonts exist on a device, the browser simply falls back to
+   the old behaviour. */
+@font-face {
+  font-family: "Rupee Sign";
+  src:
+    local("Roboto"), local("Noto Sans"), local("Segoe UI"), local("Helvetica Neue"),
+    local("Arial"), local("DejaVu Sans");
+  unicode-range: U+20B9;
 }

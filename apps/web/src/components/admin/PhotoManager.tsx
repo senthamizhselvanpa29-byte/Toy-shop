@@ -4,9 +4,31 @@ import Image from "next/image";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { MAX_PRODUCT_IMAGES } from "@toyshop/shared";
 import { cn } from "@/lib/cn";
-import { PRODUCT_IMAGES_BUCKET, productImageUrl } from "@/lib/catalog";
+import { isDemoImagePath, PRODUCT_IMAGES_BUCKET, productImageUrl } from "@/lib/catalog";
 import { ACCEPTED_IMAGE_TYPES, compressImage } from "@/lib/compressImage";
+import { hasPhotoSizes } from "@/lib/photoSizes";
 import { createClient } from "@/lib/supabase/client";
+
+type Storage = ReturnType<typeof createClient>;
+
+// Makes the three copies of a photo and uploads them. Returns the stored path
+// of the large copy, which is what the toy remembers.
+async function uploadPhoto(supabase: Storage, folderId: string, source: Blob): Promise<string> {
+  const { extension, copies } = await compressImage(source);
+  const base = `products/${folderId}/${crypto.randomUUID()}`;
+  const results = await Promise.all(
+    copies.map(({ key, blob }) =>
+      supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(`${base}-${key}.${extension}`, blob, {
+        contentType: blob.type,
+        // File names are never reused, so browsers may keep photos for a year.
+        cacheControl: "31536000",
+      }),
+    ),
+  );
+  const failed = results.find((result) => result.error);
+  if (failed?.error) throw failed.error;
+  return `${base}-l.${extension}`;
+}
 
 export type PhotoItem = { storagePath: string; altText: string };
 
@@ -33,6 +55,7 @@ export function PhotoManager({
   const [problems, setProblems] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [speedingUp, setSpeedingUp] = useState(false);
   // Latest list, so uploads that finish one by one don't overwrite each other.
   const photosRef = useRef(photos);
   photosRef.current = photos;
@@ -69,15 +92,7 @@ export function PhotoManager({
     await Promise.all(
       accepted.map(async (file) => {
         try {
-          const { blob, extension } = await compressImage(file);
-          const path = `products/${folderId}/${crypto.randomUUID()}.${extension}`;
-          const { error: uploadError } = await supabase.storage
-            .from(PRODUCT_IMAGES_BUCKET)
-            .upload(path, blob, {
-              contentType: blob.type,
-              cacheControl: "31536000",
-            });
-          if (uploadError) throw uploadError;
+          const path = await uploadPhoto(supabase, folderId, file);
           onChange([...photosRef.current, { storagePath: path, altText: "" }]);
         } catch {
           errors.push(`${file.name}: upload failed. Please try again.`);
@@ -87,6 +102,36 @@ export function PhotoManager({
       }),
     );
 
+    onUploadingChange?.(false);
+    setProblems(errors);
+  }
+
+  // Photos added before the shop made small copies (one big file each).
+  const slowPhotos = photos.filter(
+    (photo) => !hasPhotoSizes(photo.storagePath) && !isDemoImagePath(photo.storagePath),
+  );
+
+  async function speedUpPhotos() {
+    setProblems([]);
+    setSpeedingUp(true);
+    onUploadingChange?.(true);
+    const supabase = createClient();
+    const errors: string[] = [];
+    for (const photo of slowPhotos) {
+      try {
+        const response = await fetch(productImageUrl(photo.storagePath));
+        if (!response.ok) throw new Error("download failed");
+        const path = await uploadPhoto(supabase, folderId, await response.blob());
+        onChange(
+          photosRef.current.map((item) =>
+            item.storagePath === photo.storagePath ? { ...item, storagePath: path } : item,
+          ),
+        );
+      } catch {
+        errors.push("One photo couldn't be converted. Please remove it and add it again.");
+      }
+    }
+    setSpeedingUp(false);
     onUploadingChange?.(false);
     setProblems(errors);
   }
@@ -171,6 +216,23 @@ export function PhotoManager({
             </li>
           ))}
         </ul>
+      )}
+
+      {slowPhotos.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-sunshine/25 px-4 py-3">
+          <p className="min-w-48 flex-1 text-sm">
+            ⚡ {slowPhotos.length === 1 ? "One photo is" : `${slowPhotos.length} photos are`} in the old, slower
+            format. Speed {slowPhotos.length === 1 ? "it" : "them"} up, then save the toy.
+          </p>
+          <button
+            type="button"
+            onClick={speedUpPhotos}
+            disabled={speedingUp || uploading > 0}
+            className="rounded-full bg-sunshine px-4 py-2 text-sm font-bold shadow-soft hover:bg-sunshine-dark disabled:opacity-60"
+          >
+            {speedingUp ? "Working…" : "⚡ Speed up photos"}
+          </button>
+        </div>
       )}
 
       {spaceLeft > 0 && (

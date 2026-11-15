@@ -321,6 +321,7 @@ export const ta: Record<MessageKey, string> = {
   "common.saving": "சேமிக்கிறோம்…",
   "common.saved": "சேமிக்கப்பட்டது",
   "common.wait": "சற்றுக் காத்திருக்கவும்…",
+  "common.loading": "ஏற்றுகிறது…",
   "common.back": "திரும்பிச் செல்",
 
   "notFound.title": "அச்சச்சோ! அந்தப் பக்கத்தை டோபியால் கண்டுபிடிக்க முடியவில்லை",

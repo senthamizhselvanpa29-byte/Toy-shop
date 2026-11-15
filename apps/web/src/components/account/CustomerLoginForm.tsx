@@ -6,6 +6,7 @@ import { formatIndianMobile, normalizeIndianMobile } from "@toyshop/shared";
 import { useT } from "@/components/i18n/I18nProvider";
 import { Button, describedBy, Field, Input } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { announceAuthChange } from "@/lib/authSignal";
 import { loginMethods } from "@/lib/loginMethods";
 import { createClient } from "@/lib/supabase/client";
 
@@ -91,6 +92,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
       setBusy(false);
       return setError(friendlyError(verifyError.message));
     }
+    announceAuthChange();
     router.replace(next);
     router.refresh();
   }

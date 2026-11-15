@@ -35,7 +35,8 @@ export function ProductGallery({
             alt={current.alt || name}
             fill
             priority
-            sizes="(min-width: 1024px) 50vw, 100vw"
+            // Phones get the medium (800px) copy, big screens the large one.
+            sizes="(min-width: 1024px) 50vw, 66vw"
             className="object-cover"
           />
         ) : (

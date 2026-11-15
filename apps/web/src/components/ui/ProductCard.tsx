@@ -84,7 +84,9 @@ export function ProductCard({
             src={product.imageUrl}
             alt={product.name}
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            // A little under the real width on purpose, so phones with very
+            // sharp screens still pick the small (400px) copy.
+            sizes="(min-width: 1024px) 20vw, (min-width: 640px) 25vw, 30vw"
             className="object-cover"
           />
         ) : (

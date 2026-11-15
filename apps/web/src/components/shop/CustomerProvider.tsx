@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useT } from "@/components/i18n/I18nProvider";
+import { AUTH_CHANGED_EVENT, hasAuthCookie } from "@/lib/authSignal";
 import { loginPath } from "@/lib/locales";
-import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 // Shop pages are cached for everyone, so the signed-in customer and their
@@ -27,6 +28,13 @@ export function useCustomer() {
   return useContext(CustomerContext);
 }
 
+// The database client is a big download (about 70 KB), so it is only fetched
+// for shoppers who are signed in. Everyone else never needs it on shop pages.
+async function loadClient(): Promise<SupabaseClient> {
+  const { createClient } = await import("@/lib/supabase/client");
+  return createClient();
+}
+
 export function CustomerProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { locale } = useT();
@@ -34,30 +42,58 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<Set<string>>(new Set());
+  const client = useRef<SupabaseClient | null>(null);
+  const signedIn = useRef(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setReady(true);
       return;
     }
-    const supabase = createClient();
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
 
-    async function load(id: string | null) {
+    const show = (id: string | null, saved: string[]) => {
+      if (!active) return;
+      signedIn.current = Boolean(id);
       setUserId(id);
-      if (id) {
-        const { data } = await supabase.from("wishlist_items").select("product_id").eq("user_id", id);
-        setWishlist(new Set((data ?? []).map((row) => row.product_id as string)));
-      } else {
-        setWishlist(new Set());
-      }
+      setWishlist(new Set(saved));
       setReady(true);
+    };
+
+    async function load(supabase: SupabaseClient, id: string | null) {
+      if (!id) return show(null, []);
+      const { data } = await supabase.from("wishlist_items").select("product_id").eq("user_id", id);
+      show(id, (data ?? []).map((row) => row.product_id as string));
     }
 
-    supabase.auth.getUser().then(({ data }) => load(data.user?.id ?? null));
-    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") load(session?.user.id ?? null);
-    });
-    return () => subscription.subscription.unsubscribe();
+    async function sync() {
+      if (!hasAuthCookie()) return show(null, []);
+      const supabase = client.current ?? (client.current = await loadClient());
+      if (!active) return;
+      if (!unsubscribe) {
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN" || event === "SIGNED_OUT") load(supabase, session?.user.id ?? null);
+        });
+        unsubscribe = () => data.subscription.unsubscribe();
+      }
+      const { data } = await supabase.auth.getUser();
+      await load(supabase, data.user?.id ?? null);
+    }
+
+    sync();
+    // Logging in or out on this page, or in another tab.
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && hasAuthCookie() !== signedIn.current) sync();
+    };
+    window.addEventListener(AUTH_CHANGED_EVENT, sync);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      unsubscribe?.();
+      window.removeEventListener(AUTH_CHANGED_EVENT, sync);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   const toggleWishlist = useCallback(
@@ -66,7 +102,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         router.push(loginPath(locale, pathname));
         return;
       }
-      const supabase = createClient();
+      const supabase = client.current ?? (client.current = await loadClient());
       const saved = wishlist.has(productId);
       const update = (add: boolean) =>
         setWishlist((current) => {

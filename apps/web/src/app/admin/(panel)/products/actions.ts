@@ -18,6 +18,7 @@ import { requireOwner } from "@/lib/auth";
 import { databaseUpdateMessage, isMissingColumn } from "@/lib/dbUpdates";
 import { AutoTranslateError, isAutoTranslateConfigured, translateToTamilAndHindi } from "@/lib/autoTranslate";
 import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
+import { photoFiles } from "@/lib/photoSizes";
 import { refreshCatalog } from "@/lib/revalidate";
 
 export type SaveProductResult = { errors: Record<string, string> };
@@ -66,7 +67,7 @@ async function removeUnusedFiles(supabase: SupabaseClient, allPaths: string[]) {
   const used = new Set((stillUsed ?? []).map((row) => row.storage_path));
   const unused = paths.filter((path) => !used.has(path));
   if (unused.length) {
-    await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(unused);
+    await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(unused.flatMap(photoFiles));
   }
 }
 
