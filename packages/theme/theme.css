@@ -18,7 +18,7 @@
 
   --radius-bubble: 28px;
 
-  --font-heading: var(--font-fredoka), "Baloo 2", system-ui, sans-serif;
+  --font-heading: var(--font-fredoka), system-ui, sans-serif;
   --font-body: var(--font-nunito), system-ui, sans-serif;
 
   --shadow-soft: 0 6px 0 rgb(43 42 76 / 0.12);

@@ -3,8 +3,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_SHOP_SETTINGS,
   deliveryFeeFor,
+  localized,
   MAX_QTY_PER_TOY,
   type CartLine,
+  type ContentTranslations,
+  type Locale,
   type ShopSettings,
 } from "@toyshop/shared";
 import { productImageUrl } from "@/lib/catalog";
@@ -26,7 +29,9 @@ export async function getShopSettings(supabase: SupabaseClient): Promise<ShopSet
 
 export type QuoteLine = {
   productId: string;
+  // English name (kept on the order and invoice) and the name to show the shopper.
   name: string;
+  displayName: string;
   slug: string;
   imagePath: string;
   imageUrl: string | null;
@@ -52,7 +57,7 @@ export type Quote = {
 
 // Turns a cart (toy ids + quantities) into real prices and stock from the
 // database. Toys that are hidden, deleted or sold out are flagged, never priced.
-export async function quoteCart(supabase: SupabaseClient, cart: CartLine[]): Promise<Quote> {
+export async function quoteCart(supabase: SupabaseClient, cart: CartLine[], locale: Locale = "en"): Promise<Quote> {
   const wanted = new Map<string, number>();
   for (const line of cart.slice(0, 50)) {
     if (typeof line?.productId !== "string" || !/^[0-9a-f-]{36}$/i.test(line.productId)) continue;
@@ -62,35 +67,36 @@ export async function quoteCart(supabase: SupabaseClient, cart: CartLine[]): Pro
   }
 
   const ids = [...wanted.keys()];
-  const [settings, { data }] = await Promise.all([
-    getShopSettings(supabase),
-    ids.length
-      ? supabase
-          .from("products")
-          .select("id, name, slug, price_paise, mrp_paise, gst_rate, stock, status, product_images(storage_path, position)")
-          .in("id", ids)
-          .eq("status", "published")
-      : Promise.resolve({ data: [] as never[] }),
-  ]);
+  const fields = "id, name, slug, translations, price_paise, mrp_paise, gst_rate, stock, status, product_images(storage_path, position)";
+  const readProducts = async () => {
+    if (!ids.length) return [];
+    const read = (select: string) => supabase.from("products").select(select).in("id", ids).eq("status", "published");
+    let { data, error } = await read(fields);
+    // Before 0007_translations.sql has been run there are no Tamil/Hindi words yet.
+    if (error?.code === "42703") ({ data, error } = await read(fields.replace(", translations", "")));
+    return data ?? [];
+  };
+  const [settings, data] = await Promise.all([getShopSettings(supabase), readProducts()]);
 
   type Row = {
     id: string;
     name: string;
     slug: string;
+    translations?: ContentTranslations | null;
     price_paise: number;
     mrp_paise: number | null;
     gst_rate: number;
     stock: number;
     product_images: { storage_path: string; position: number }[];
   };
-  const byId = new Map(((data ?? []) as Row[]).map((row) => [row.id, row]));
+  const byId = new Map((data as unknown as Row[]).map((row) => [row.id, row]));
 
   const lines: QuoteLine[] = ids.map((id) => {
     const requested = wanted.get(id)!;
     const row = byId.get(id);
     if (!row) {
       return {
-        productId: id, name: "This toy is no longer available", slug: "", imagePath: "", imageUrl: null,
+        productId: id, name: "", displayName: "", slug: "", imagePath: "", imageUrl: null,
         unitPricePaise: 0, mrpPaise: null, gstRate: 0, stock: 0, requested, quantity: 0, lineTotalPaise: 0,
         problem: "unavailable",
       };
@@ -100,6 +106,7 @@ export async function quoteCart(supabase: SupabaseClient, cart: CartLine[]): Pro
     return {
       productId: id,
       name: row.name,
+      displayName: localized(row.translations, locale, "name", row.name),
       slug: row.slug,
       imagePath: cover?.storage_path ?? "",
       imageUrl: cover ? productImageUrl(cover.storage_path) : null,

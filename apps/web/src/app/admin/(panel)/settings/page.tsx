@@ -1,4 +1,5 @@
 import { paiseToRupeesInput } from "@toyshop/shared";
+import { RefreshShopButton } from "@/components/admin/RefreshShopButton";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { Card } from "@/components/ui";
 import { getShopSettings } from "@/lib/orders";
@@ -8,7 +9,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
-  const settings = await getShopSettings(supabase);
+  const [settings, { data: business }] = await Promise.all([
+    getShopSettings(supabase),
+    supabase
+      .from("shop_settings")
+      .select("business_name, business_address, business_state, business_phone, business_email, gstin, return_days")
+      .eq("id", 1)
+      .maybeSingle(),
+  ]);
   const razorpayMode = process.env.RAZORPAY_KEY_ID?.startsWith("rzp_live_") ? "live" : "test";
 
   const checks = [
@@ -59,12 +67,28 @@ export default async function SettingsPage() {
         )}
       </Card>
 
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-2xl">⚡ Shop pages</h2>
+        <p className="text-ink-soft">
+          Your shop pages are kept ready-made so they open fast. They update by themselves whenever you save a toy, a
+          category or a setting here. If something ever looks out of date, tap this button.
+        </p>
+        <RefreshShopButton />
+      </Card>
+
       <SettingsForm
         initial={{
           deliveryFee: paiseToRupeesInput(settings.deliveryFeePaise),
           freeDeliveryAbove: paiseToRupeesInput(settings.freeDeliveryAbovePaise),
           codEnabled: settings.codEnabled,
           codMax: paiseToRupeesInput(settings.codMaxPaise),
+          businessName: business?.business_name ?? "Toy Shop",
+          businessAddress: business?.business_address ?? "",
+          businessState: business?.business_state ?? "Tamil Nadu",
+          businessPhone: business?.business_phone ?? "",
+          businessEmail: business?.business_email ?? "",
+          gstin: business?.gstin ?? "",
+          returnDays: String(business?.return_days ?? 7),
         }}
       />
     </div>

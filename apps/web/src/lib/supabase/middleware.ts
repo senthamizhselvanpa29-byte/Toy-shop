@@ -2,20 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 
-// Pages that need a signed-in person, and where to send them otherwise.
-const PROTECTED = [
-  { prefix: "/admin", login: "/admin/login", open: ["/admin/login"] },
-  { prefix: "/account", login: "/account/login", open: ["/account/login", "/account/callback"] },
-  { prefix: "/checkout", login: "/account/login", open: [] as string[] },
-];
+export type SessionOptions = {
+  // Where to send a signed-out visitor. Leave out for pages anyone may open.
+  loginUrl?: URL;
+  // Serve a different page inside the app (e.g. "/toys" is really "/en/toys").
+  rewriteTo?: URL;
+};
 
 // Refreshes the Supabase session cookie and sends signed-out visitors of the
-// owner area or customer account pages to the right login page.
-export async function updateSession(request: NextRequest) {
-  if (!isSupabaseConfigured()) return NextResponse.next({ request });
+// owner area or customer pages to the right login page.
+export async function updateSession(request: NextRequest, options: SessionOptions = {}) {
+  const respond = () =>
+    options.rewriteTo ? NextResponse.rewrite(options.rewriteTo, { request }) : NextResponse.next({ request });
+
+  if (!isSupabaseConfigured()) return respond();
 
   const { url, anonKey } = getSupabaseEnv();
-  let response = NextResponse.next({ request });
+  let response = respond();
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -23,12 +26,10 @@ export async function updateSession(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = respond();
+        cookiesToSet.forEach(({ name, value, options: cookieOptions }) =>
+          response.cookies.set(name, value, cookieOptions),
         );
       },
     },
@@ -39,14 +40,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname, search } = request.nextUrl;
-  const area = PROTECTED.find((item) => pathname.startsWith(item.prefix));
-  if (!user && area && !area.open.includes(pathname)) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = area.login;
-    loginUrl.search = area.login === "/account/login" ? `?next=${encodeURIComponent(pathname + search)}` : "";
-    return NextResponse.redirect(loginUrl);
-  }
-
+  if (!user && options.loginUrl) return NextResponse.redirect(options.loginUrl);
   return response;
 }

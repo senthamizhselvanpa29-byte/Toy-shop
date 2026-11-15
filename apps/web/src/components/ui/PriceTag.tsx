@@ -5,6 +5,9 @@ type PriceTagProps = {
   pricePaise: number;
   mrpPaise?: number;
   size?: "md" | "lg";
+  // "{percent}" is replaced with the discount.
+  offLabel?: string;
+  mrpLabel?: string;
   className?: string;
 };
 
@@ -12,6 +15,8 @@ export function PriceTag({
   pricePaise,
   mrpPaise,
   size = "md",
+  offLabel = "{percent}% off",
+  mrpLabel = "MRP",
   className,
 }: PriceTagProps) {
   const off = mrpPaise ? discountPercent(pricePaise, mrpPaise) : 0;
@@ -29,10 +34,10 @@ export function PriceTag({
       {off > 0 && mrpPaise && (
         <>
           <span className="text-sm text-ink-soft line-through">
-            <span className="sr-only">MRP </span>
+            <span className="sr-only">{mrpLabel} </span>
             {formatPaise(mrpPaise)}
           </span>
-          <span className="text-sm font-bold text-mint-dark">{off}% off</span>
+          <span className="text-sm font-bold text-mint-dark">{offLabel.replace("{percent}", String(off))}</span>
         </>
       )}
     </div>

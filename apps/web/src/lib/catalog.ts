@@ -1,4 +1,4 @@
-import type { AgeGroup, CategoryColor, ProductStatus } from "@toyshop/shared";
+import type { AgeGroup, CategoryColor, ContentTranslations, ProductStatus } from "@toyshop/shared";
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
 
@@ -9,6 +9,7 @@ export type Category = {
   icon: string;
   color: CategoryColor;
   position: number;
+  translations?: ContentTranslations | null;
 };
 
 export type ProductImage = {
@@ -37,6 +38,7 @@ export type Product = {
   status: ProductStatus;
   is_featured: boolean;
   is_demo: boolean;
+  translations: ContentTranslations | null;
   created_at: string;
   updated_at: string;
 };

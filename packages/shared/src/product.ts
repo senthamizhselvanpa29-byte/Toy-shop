@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AGE_GROUPS, GST_RATES } from "./constants";
+import type { ContentTranslations } from "./i18n";
 import { parseRupeesToPaise } from "./money";
 
 export const PRODUCT_STATUSES = ["draft", "published", "archived"] as const;
@@ -23,6 +24,69 @@ const ageGroupIds = AGE_GROUPS.map((group) => group.id) as [
 ];
 
 const optionalText = (max: number) => z.string().trim().max(max).default("");
+
+// Languages the owner can add toy words in. English is the main text; an
+// empty box shows the English words instead.
+export const CONTENT_LOCALES = ["ta", "hi"] as const;
+export type ContentLocale = (typeof CONTENT_LOCALES)[number];
+export const CONTENT_LOCALE_NAMES: Record<ContentLocale, string> = { ta: "தமிழ் Tamil", hi: "हिंदी Hindi" };
+
+export type ProductTexts = { name: string; shortDescription: string; description: string };
+export type ProductTranslations = Record<ContentLocale, ProductTexts>;
+
+const EMPTY_TEXTS: ProductTexts = { name: "", shortDescription: "", description: "" };
+export const EMPTY_PRODUCT_TRANSLATIONS: ProductTranslations = { ta: { ...EMPTY_TEXTS }, hi: { ...EMPTY_TEXTS } };
+
+const productTextsSchema = z
+  .object({
+    name: optionalText(120),
+    shortDescription: optionalText(200),
+    description: optionalText(5000),
+  })
+  .optional();
+
+// Form boxes → what the database keeps: { ta: { name, short_description, description } }.
+export function productTranslationsToRow(
+  input: Partial<Record<ContentLocale, Partial<ProductTexts> | undefined>> | undefined,
+): ContentTranslations {
+  const row: ContentTranslations = {};
+  for (const locale of CONTENT_LOCALES) {
+    const texts = input?.[locale];
+    const entry: Record<string, string> = {};
+    if (texts?.name?.trim()) entry.name = texts.name.trim();
+    if (texts?.shortDescription?.trim()) entry.short_description = texts.shortDescription.trim();
+    if (texts?.description?.trim()) entry.description = texts.description.trim();
+    if (Object.keys(entry).length) row[locale] = entry;
+  }
+  return row;
+}
+
+// What the database keeps → form boxes.
+export function productTranslationsFromRow(row: unknown): ProductTranslations {
+  const data = (row && typeof row === "object" ? row : {}) as ContentTranslations;
+  const read = (locale: ContentLocale): ProductTexts => ({
+    name: data[locale]?.name ?? "",
+    shortDescription: data[locale]?.short_description ?? "",
+    description: data[locale]?.description ?? "",
+  });
+  return { ta: read("ta"), hi: read("hi") };
+}
+
+export type CategoryTranslations = Record<ContentLocale, string>;
+
+export function categoryTranslationsToRow(input: Partial<CategoryTranslations> | undefined): ContentTranslations {
+  const row: ContentTranslations = {};
+  for (const locale of CONTENT_LOCALES) {
+    const name = input?.[locale]?.trim();
+    if (name) row[locale] = { name };
+  }
+  return row;
+}
+
+export function categoryTranslationsFromRow(row: unknown): CategoryTranslations {
+  const data = (row && typeof row === "object" ? row : {}) as ContentTranslations;
+  return { ta: data.ta?.name ?? "", hi: data.hi?.name ?? "" };
+}
 
 const rupees = (label: string) =>
   z.string().trim().transform((value, ctx) => {
@@ -71,6 +135,7 @@ export const productFormSchema = z
     ),
     bisLicense: optionalText(60),
     isFeatured: z.boolean().default(false),
+    translations: z.object({ ta: productTextsSchema, hi: productTextsSchema }).optional(),
     images: z
       .array(
         z.object({
@@ -102,6 +167,7 @@ export const categoryFormSchema = z.object({
     .max(60, "Keep the name under 60 letters"),
   icon: z.string().trim().min(1, "Pick an emoji").max(16),
   color: z.enum(CATEGORY_COLORS, { message: "Pick a colour" }),
+  translations: z.object({ ta: optionalText(60), hi: optionalText(60) }).optional(),
 });
 
 export type CategoryFormInput = z.input<typeof categoryFormSchema>;

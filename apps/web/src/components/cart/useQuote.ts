@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Quote } from "@/lib/orders";
-import { quoteCheckout } from "@/app/(shop)/checkout/actions";
+import { quoteCheckout } from "@/app/[locale]/checkout/actions";
+import { useT } from "@/components/i18n/I18nProvider";
 import { useCart } from "./CartProvider";
 
 // Asks the server for real prices, stock and delivery for the cart. If a toy
 // sold out or there are fewer left, the cart is corrected and `notices` says why.
 export function useQuote() {
   const cart = useCart();
+  const { t, locale } = useT();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [notices, setNotices] = useState<string[]>([]);
@@ -24,18 +26,18 @@ export function useQuote() {
     }
     const id = ++request.current;
     setLoading(true);
-    quoteCheckout(cart.lines).then((result) => {
+    quoteCheckout(cart.lines, locale).then((result) => {
       if (id !== request.current) return;
       const changes: string[] = [];
       for (const line of result.lines) {
         if (line.problem === "unavailable") {
-          changes.push("A toy in your cart is no longer available, so we removed it.");
+          changes.push(t("cart.noticeUnavailable"));
           cart.remove(line.productId);
         } else if (line.problem === "sold_out") {
-          changes.push(`${line.name} just sold out, so we removed it.`);
+          changes.push(t("cart.noticeSoldOut", { name: line.displayName }));
           cart.remove(line.productId);
         } else if (line.problem === "reduced") {
-          changes.push(`Only ${line.quantity} of ${line.name} left — we updated your cart.`);
+          changes.push(t("cart.noticeReduced", { count: line.quantity, name: line.displayName }));
           cart.setQuantity(line.productId, line.quantity);
         }
       }

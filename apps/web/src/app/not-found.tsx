@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buttonClasses, TobySays } from "@/components/ui";
 
+// Fallback for addresses outside the shop (the shop has its own, translated one).
 export default function NotFound() {
   return (
     <main className="mx-auto max-w-xl px-4 py-20">

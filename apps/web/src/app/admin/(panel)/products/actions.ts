@@ -7,12 +7,18 @@ import {
   fieldErrors,
   PRODUCT_STATUSES,
   productFormSchema,
+  productTranslationsToRow,
   slugify,
   type ProductFormInput,
   type ProductStatus,
+  type ProductTexts,
+  type ProductTranslations,
 } from "@toyshop/shared";
 import { requireOwner } from "@/lib/auth";
+import { databaseUpdateMessage, isMissingColumn } from "@/lib/dbUpdates";
+import { AutoTranslateError, isAutoTranslateConfigured, translateToTamilAndHindi } from "@/lib/autoTranslate";
 import { isDemoImagePath, PRODUCT_IMAGES_BUCKET } from "@/lib/catalog";
+import { refreshCatalog } from "@/lib/revalidate";
 
 export type SaveProductResult = { errors: Record<string, string> };
 
@@ -23,7 +29,7 @@ function refreshShopPages(productId?: string) {
   revalidatePath("/admin/products");
   if (productId) revalidatePath(`/admin/products/${productId}`);
   // Refresh every shop page (home, listings, toy pages).
-  revalidatePath("/", "layout");
+  refreshCatalog();
 }
 
 // Inserts a product, adding a short suffix to the web address if the name is taken.
@@ -95,6 +101,7 @@ export async function saveProduct(
     weight_grams: values.weightGrams,
     bis_license: values.bisLicense,
     is_featured: values.isFeatured,
+    translations: productTranslationsToRow(values.translations),
     // Once the owner edits a demo toy, it becomes one of their own.
     is_demo: false,
   };
@@ -111,6 +118,7 @@ export async function saveProduct(
   }
 
   if (error || !id) {
+    if (isMissingColumn(error)) return { errors: { form: databaseUpdateMessage("0007_translations.sql") } };
     if (error?.code === UNIQUE_VIOLATION && error.message.includes("sku")) {
       return { errors: { sku: "Another toy already uses this SKU" } };
     }
@@ -146,6 +154,30 @@ export async function saveProduct(
   redirect(`/admin/products/${id}?saved=${status === "published" ? "published" : "1"}`);
 }
 
+// ✨ Auto-translate: Tamil and Hindi words for a toy, written by Claude from the
+// owner's English. Only works when ANTHROPIC_API_KEY is set (in Vercel).
+export async function autoTranslateProduct(
+  texts: ProductTexts,
+): Promise<{ translations: ProductTranslations } | { error: string }> {
+  await requireOwner();
+  if (!isAutoTranslateConfigured()) {
+    return { error: "Auto-translate isn't switched on. Add ANTHROPIC_API_KEY in Vercel to use it." };
+  }
+  const english: ProductTexts = {
+    name: String(texts.name ?? "").trim().slice(0, 120),
+    shortDescription: String(texts.shortDescription ?? "").trim().slice(0, 200),
+    description: String(texts.description ?? "").trim().slice(0, 5000),
+  };
+  if (!english.name) return { error: "Type the English toy name first." };
+  try {
+    return { translations: await translateToTamilAndHindi(english) };
+  } catch (error) {
+    return {
+      error: error instanceof AutoTranslateError ? error.message : "Couldn't translate right now. Please try again.",
+    };
+  }
+}
+
 export async function duplicateProduct(productId: string) {
   const { supabase } = await requireOwner();
 
@@ -169,6 +201,7 @@ export async function duplicateProduct(productId: string) {
     gst_rate: product.gst_rate,
     weight_grams: product.weight_grams,
     bis_license: product.bis_license,
+    ...(product.translations ? { translations: product.translations } : {}),
     name,
     sku: null,
     status: "draft",

@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useT } from "@/components/i18n/I18nProvider";
+import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -27,6 +29,7 @@ export function useCustomer() {
 
 export function CustomerProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { locale } = useT();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -60,7 +63,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const toggleWishlist = useCallback(
     async (productId: string) => {
       if (!userId) {
-        router.push(`/account/login?next=${encodeURIComponent(pathname)}`);
+        router.push(loginPath(locale, pathname));
         return;
       }
       const supabase = createClient();
@@ -80,7 +83,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       // 23505 = it was already saved (e.g. in another tab), which is fine.
       if (error && error.code !== "23505") update(saved);
     },
-    [userId, wishlist, router, pathname],
+    [userId, wishlist, router, pathname, locale],
   );
 
   const value = useMemo(

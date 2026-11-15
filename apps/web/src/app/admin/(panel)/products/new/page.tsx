@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EMPTY_PRODUCT, ProductForm } from "@/components/admin/ProductForm";
 import type { Category } from "@/lib/catalog";
+import { isAutoTranslateConfigured } from "@/lib/autoTranslate";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function NewProductPage() {
@@ -19,7 +20,7 @@ export default async function NewProductPage() {
         <h1 className="mt-1 text-3xl sm:text-4xl">➕ Add a new toy</h1>
         <p className="text-ink-soft">Fill in the steps below. Only the name and price are required.</p>
       </div>
-      <ProductForm
+      <ProductForm autoTranslate={isAutoTranslateConfigured()}
         productId={null}
         photoFolderId={crypto.randomUUID()}
         status={null}

@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/components/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { formatIndianMobile, formatPaise } from "@toyshop/shared";
-import { placeOrder } from "@/app/(shop)/checkout/actions";
+import { placeOrder } from "@/app/[locale]/checkout/actions";
 import { AddressBook, type Address } from "@/components/account/AddressBook";
+import { useT } from "@/components/i18n/I18nProvider";
+import { localePath } from "@/lib/locales";
 import { Badge, Button, Card, TobyLoader, TobySays, buttonClasses } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { OrderSummary } from "./OrderSummary";
@@ -23,6 +25,7 @@ type Props = {
 
 export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayment, orderingEnabled }: Props) {
   const router = useRouter();
+  const { t, locale } = useT();
   const { quote, loading, notices, cart, refresh } = useQuote();
   const preferredAddress = addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? "";
   const [addressId, setAddressId] = useState(preferredAddress);
@@ -39,17 +42,17 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
   if (!cart.ready || (loading && !quote)) {
     return (
       <div className="flex justify-center py-20">
-        <TobyLoader label="Getting your order ready…" />
+        <TobyLoader label={t("checkout.loading")} />
       </div>
     );
   }
   if (cart.lines.length === 0 || !quote) {
     return (
       <TobySays
-        title="Your cart is empty"
+        title={t("cart.emptyTitle")}
         action={
           <Link href="/toys" className={buttonClasses("primary", "lg")}>
-            Find some toys 🧸
+            {t("cart.findToys")} 🧸
           </Link>
         }
       />
@@ -73,7 +76,7 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
         expectedTotalPaise: quote!.totalPaise,
       });
       if ("error" in result) {
-        setError(result.error);
+        setError(t(result.error));
         setBusy(false);
         // Re-check the cart so the customer sees what changed.
         if (result.quote) refresh();
@@ -82,11 +85,11 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
 
       const placed = () => {
         cart.clear();
-        router.push(`/account/orders/${result.orderId}?placed=1`);
+        router.push(localePath(locale, `/account/orders/${result.orderId}?placed=1`));
       };
       if (chosenMethod === "cod") return placed();
       if (!result.razorpay) {
-        setError("We couldn't start the online payment. Please try again, or choose cash on delivery.");
+        setError(t("checkout.errStart"));
         setBusy(false);
         return;
       }
@@ -97,9 +100,7 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
       if (outcome === "paid") return placed();
       setBusy(false);
       setError(
-        outcome === "closed"
-          ? "Payment cancelled — no money was taken. Your cart is still here: try again, or choose cash on delivery."
-          : "The payment didn't go through and no money was taken. Please try again, or choose another way to pay.",
+        outcome === "closed" ? t("checkout.cancelled") : t("checkout.failed"),
       );
     });
   }
@@ -114,9 +115,9 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
         ))}
 
         <Card className="flex flex-col gap-4">
-          <h2 className="text-2xl">1. Delivery address</h2>
+          <h2 className="text-2xl">1. {t("checkout.address")}</h2>
           {addresses.length > 0 && (
-            <div role="radiogroup" aria-label="Delivery address" className="grid gap-3 md:grid-cols-2">
+            <div role="radiogroup" aria-label={t("checkout.address")} className="grid gap-3 md:grid-cols-2">
               {addresses.map((address) => (
                 <button
                   key={address.id}
@@ -131,7 +132,7 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
                 >
                   <span className="flex items-center gap-2 font-heading text-lg">
                     {addressId === address.id ? "🔘" : "⚪"} {address.full_name}
-                    <Badge color="sky" className="ml-auto">{address.label}</Badge>
+                    <Badge color="sky" className="ml-auto">{t(`address.label.${address.label}`)}</Badge>
                   </span>
                   <span className="mt-1 block text-sm leading-relaxed text-ink-soft">
                     {address.line1}
@@ -147,31 +148,31 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
             defaultName={defaultName}
             defaultPhone={defaultPhone}
             compact
-            addLabel={addresses.length ? "➕ Deliver to a new address" : "➕ Add your delivery address"}
+            addLabel={`➕ ${addresses.length ? t("checkout.newAddress") : t("checkout.addAddress")}`}
           />
         </Card>
 
         <Card className="flex flex-col gap-4">
-          <h2 className="text-2xl">2. How would you like to pay?</h2>
-          <div role="radiogroup" aria-label="Payment method" className="flex flex-col gap-3">
+          <h2 className="text-2xl">2. {t("checkout.howPay")}</h2>
+          <div role="radiogroup" aria-label={t("checkout.paymentMethod")} className="flex flex-col gap-3">
             <PaymentOption
               selected={chosenMethod === "razorpay"}
               disabled={!onlinePayment}
               onSelect={() => setMethod("razorpay")}
-              title="💳 Pay online"
-              text={onlinePayment ? "UPI (GPay, PhonePe, Paytm), cards, net banking and wallets — secured by Razorpay" : "Coming soon"}
+              title={`💳 ${t("checkout.payOnline")}`}
+              text={onlinePayment ? t("checkout.payOnlineText") : t("checkout.comingSoon")}
             />
             <PaymentOption
               selected={chosenMethod === "cod"}
               disabled={!codAllowed}
               onSelect={() => setMethod("cod")}
-              title="💵 Cash on delivery"
+              title={`💵 ${t("checkout.cod")}`}
               text={
                 !quote.settings.codEnabled
-                  ? "Not available right now"
+                  ? t("checkout.codOff")
                   : codAllowed
-                    ? "Pay in cash when your toys arrive"
-                    : `Only for orders up to ${formatPaise(quote.settings.codMaxPaise)}`
+                    ? t("checkout.codText")
+                    : t("checkout.codLimit", { amount: formatPaise(quote.settings.codMaxPaise) })
               }
             />
           </div>
@@ -180,7 +181,7 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
 
       <aside className="lg:sticky lg:top-40 lg:self-start">
         <Card className="flex flex-col gap-4">
-          <h2 className="text-2xl">3. Your order</h2>
+          <h2 className="text-2xl">3. {t("checkout.yourOrder")}</h2>
           <ul className="flex flex-col gap-3">
             {lines.map((line) => (
               <li key={line.productId} className="flex items-center gap-3">
@@ -188,34 +189,34 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
                   {line.imageUrl && <Image src={line.imageUrl} alt="" fill sizes="48px" className="object-cover" />}
                 </span>
                 <span className="min-w-0 flex-1 text-sm">
-                  <span className="line-clamp-1 font-bold">{line.name}</span>
-                  <span className="text-ink-soft">Qty {line.quantity}</span>
+                  <span className="line-clamp-1 font-bold">{line.displayName}</span>
+                  <span className="text-ink-soft">{t("checkout.qty", { count: line.quantity })}</span>
                 </span>
                 <span className="text-sm font-bold">{formatPaise(line.lineTotalPaise)}</span>
               </li>
             ))}
           </ul>
           <Link href="/cart" className="text-sm font-bold text-sky-dark hover:underline">
-            ✏️ Change cart
+            ✏️ {t("checkout.changeCart")}
           </Link>
-          <OrderSummary quote={quote} />
+          <OrderSummary quote={quote} t={t} />
           {error && (
             <p role="alert" className="rounded-2xl bg-bubblegum/15 px-4 py-3 font-bold text-bubblegum-dark">
               {error}
             </p>
           )}
           {!orderingEnabled && (
-            <p className="rounded-2xl bg-sunshine/30 px-4 py-3 text-sm">Ordering opens very soon — thanks for your patience!</p>
+            <p className="rounded-2xl bg-sunshine/30 px-4 py-3 text-sm">{t("checkout.notOpen")}</p>
           )}
           <Button size="lg" disabled={!canPlace} onClick={submit}>
             {busy
-              ? "Placing your order…"
+              ? t("checkout.placing")
               : chosenMethod === "razorpay"
-                ? `Pay ${formatPaise(quote.totalPaise)} 🔒`
-                : "Place order 🎉"}
+                ? `${t("checkout.pay", { amount: formatPaise(quote.totalPaise) })} 🔒`
+                : `${t("checkout.place")} 🎉`}
           </Button>
-          {!addressId && <p className="text-center text-sm text-ink-soft">Add a delivery address to continue.</p>}
-          {addressId && !chosenMethod && <p className="text-center text-sm text-ink-soft">Choose how you&apos;d like to pay.</p>}
+          {!addressId && <p className="text-center text-sm text-ink-soft">{t("checkout.needAddress")}</p>}
+          {addressId && !chosenMethod && <p className="text-center text-sm text-ink-soft">{t("checkout.needMethod")}</p>}
         </Card>
       </aside>
     </div>

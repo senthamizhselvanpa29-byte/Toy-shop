@@ -11,7 +11,7 @@ const items: NavItem[] = [
   { label: "Dashboard", icon: "🏠", href: "/admin" },
   { label: "Products", icon: "🧸", href: "/admin/products" },
   { label: "Categories", icon: "🗂️", href: "/admin/categories" },
-  { label: "Orders", icon: "📦" },
+  { label: "Orders", icon: "📦", href: "/admin/orders" },
   { label: "Customers", icon: "👨‍👩‍👧" },
   { label: "Coupons", icon: "🎟️" },
   { label: "Settings", icon: "⚙️", href: "/admin/settings" },

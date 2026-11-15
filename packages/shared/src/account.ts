@@ -32,25 +32,26 @@ const mobile = z
   .transform((value, ctx) => {
     const normalized = normalizeIndianMobile(value);
     if (!normalized) {
-      ctx.addIssue({ code: "custom", message: "Enter a 10-digit Indian mobile number" });
+      ctx.addIssue({ code: "custom", message: "v.mobile" });
       return z.NEVER;
     }
     return normalized;
   });
 
+// Error messages are translation keys (see i18n/en.ts "v.*").
 export const addressFormSchema = z.object({
   label: z.enum(ADDRESS_LABELS).default("Home"),
-  fullName: z.string().trim().min(2, "Please enter the receiver's name").max(80),
+  fullName: z.string().trim().min(2, "v.receiver").max(80),
   phone: mobile,
-  line1: z.string().trim().min(3, "Please enter the house / flat and street").max(120),
+  line1: z.string().trim().min(3, "v.line1").max(120),
   line2: z.string().trim().max(120).default(""),
   landmark: z.string().trim().max(80).default(""),
-  city: z.string().trim().min(2, "Please enter the town or city").max(60),
-  state: z.enum(INDIAN_STATES, { message: "Please pick a state" }),
+  city: z.string().trim().min(2, "v.city").max(60),
+  state: z.enum(INDIAN_STATES, { message: "v.state" }),
   pincode: z
     .string()
     .trim()
-    .regex(/^[1-9]\d{5}$/, "Pincode should be 6 digits"),
+    .regex(/^[1-9]\d{5}$/, "v.pincode"),
   isDefault: z.boolean().default(false),
 });
 
@@ -65,7 +66,7 @@ export const profileFormSchema = z.object({
       if (value === "") return null;
       const normalized = normalizeIndianMobile(value);
       if (!normalized) {
-        ctx.addIssue({ code: "custom", message: "Enter a 10-digit Indian mobile number" });
+        ctx.addIssue({ code: "custom", message: "v.mobile" });
         return z.NEVER;
       }
       return normalized;

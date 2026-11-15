@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useT } from "@/components/i18n/I18nProvider";
+import { localePath } from "@/lib/locales";
 import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 export function LogoutButton() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const { t, locale } = useT();
 
   return (
     <Button
@@ -18,11 +21,11 @@ export function LogoutButton() {
       onClick={async () => {
         setBusy(true);
         await createClient().auth.signOut();
-        router.replace("/");
+        router.replace(localePath(locale, "/"));
         router.refresh();
       }}
     >
-      {busy ? "Logging out…" : "Log out"}
+      {busy ? t("account.loggingOut") : t("account.logout")}
     </Button>
   );
 }

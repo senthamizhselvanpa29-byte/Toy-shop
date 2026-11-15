@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatIndianMobile, normalizeIndianMobile } from "@toyshop/shared";
+import { useT } from "@/components/i18n/I18nProvider";
 import { Button, describedBy, Field, Input } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { loginMethods } from "@/lib/loginMethods";
@@ -12,31 +13,28 @@ type Method = "phone" | "email";
 
 const RESEND_SECONDS = 60;
 
+/** Turns a Supabase auth error into a translation key the customer can understand. */
 function friendlyError(message: string): string {
   const text = message.toLowerCase();
-  if (text.includes("rate") || text.includes("seconds") || text.includes("too many")) {
-    return "Please wait a minute before asking for another code.";
-  }
-  if (text.includes("expired") || text.includes("invalid") || text.includes("token")) {
-    return "That code didn't work. Check it, or ask for a new one.";
-  }
+  if (text.includes("rate") || text.includes("seconds") || text.includes("too many")) return "login.errWait";
+  if (text.includes("expired") || text.includes("invalid") || text.includes("token")) return "login.errCode";
   if (text.includes("sending") || text.includes("smtp") || text.includes("email address not authorized")) {
-    return "We couldn't send the email just now. Please try again in a few minutes.";
+    return "login.errEmail";
   }
-  if (text.includes("sms") || text.includes("phone provider")) {
-    return "We couldn't send an SMS right now. Please try email instead.";
-  }
-  return "Something went wrong. Please try again.";
+  if (text.includes("sms") || text.includes("phone provider")) return "login.errSms";
+  return "login.errOther";
 }
 
 export function CustomerLoginForm({ next }: { next: string }) {
   const router = useRouter();
+  const { t } = useT();
   const [method, setMethod] = useState<Method>(loginMethods.phone ? "phone" : "email");
   const [step, setStep] = useState<"enter" | "code">("enter");
   const [identifier, setIdentifier] = useState("");
   const [sentTo, setSentTo] = useState("");
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
+  const [errorKey, setError] = useState("");
+  const error = errorKey ? t(errorKey) : "";
   const [busy, setBusy] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -51,10 +49,10 @@ export function CustomerLoginForm({ next }: { next: string }) {
     let target = identifier.trim();
     if (method === "phone") {
       const phone = normalizeIndianMobile(target);
-      if (!phone) return setError("Enter a 10-digit Indian mobile number");
+      if (!phone) return setError("v.mobile");
       target = phone;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
-      return setError("Enter a valid email address");
+      return setError("login.errEmailInvalid");
     }
 
     setBusy(true);
@@ -82,7 +80,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
   async function verifyCode() {
     setError("");
     const token = code.replace(/\D/g, "");
-    if (token.length < 6) return setError("Enter the code we sent you");
+    if (token.length < 6) return setError("login.errNoCode");
     setBusy(true);
     const supabase = createClient();
     const { error: verifyError } =
@@ -120,11 +118,11 @@ export function CustomerLoginForm({ next }: { next: string }) {
         }}
       >
         <p className="text-ink-soft">
-          We sent a code to{" "}
+          {t("login.sentTo")}{" "}
           <strong className="text-ink">{method === "phone" ? formatIndianMobile(sentTo) : sentTo}</strong>.
-          {method === "email" && " Check your inbox (and spam folder)."}
+          {method === "email" && ` ${t("login.checkInbox")}`}
         </p>
-        <Field id="otp-code" label="Enter the code" error={error}>
+        <Field id="otp-code" label={t("login.enterCode")} error={error}>
           <Input
             id="otp-code"
             value={code}
@@ -139,7 +137,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
           />
         </Field>
         <Button type="submit" size="lg" disabled={busy}>
-          {busy ? "Checking…" : "Log in 🚀"}
+          {busy ? t("login.checking") : t("login.logIn")}
         </Button>
         <div className="flex flex-wrap justify-between gap-2 text-sm">
           <button
@@ -150,7 +148,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
               setError("");
             }}
           >
-            ← Change {method === "phone" ? "number" : "email"}
+            ← {method === "phone" ? t("login.changeNumber") : t("login.changeEmail")}
           </button>
           <button
             type="button"
@@ -158,7 +156,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
             className="font-bold text-sky-dark underline-offset-2 enabled:hover:underline disabled:text-ink-soft"
             onClick={sendCode}
           >
-            {cooldown > 0 ? `Send a new code in ${cooldown}s` : "Send a new code"}
+            {cooldown > 0 ? t("login.resendIn", { s: cooldown }) : t("login.resend")}
           </button>
         </div>
       </form>
@@ -168,7 +166,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
   return (
     <div className="flex flex-col gap-5">
       {loginMethods.phone && (
-        <div role="tablist" aria-label="Log in with" className="grid grid-cols-2 gap-1 rounded-full bg-ink/5 p-1">
+        <div role="tablist" aria-label={t("login.with")} className="grid grid-cols-2 gap-1 rounded-full bg-ink/5 p-1">
           {(["phone", "email"] as const).map((item) => (
             <button
               key={item}
@@ -185,7 +183,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
                 method === item ? "bg-white shadow-soft" : "text-ink-soft",
               )}
             >
-              {item === "phone" ? "📱 Mobile" : "✉️ Email"}
+              {item === "phone" ? `📱 ${t("login.mobileTab")}` : `✉️ ${t("login.emailTab")}`}
             </button>
           ))}
         </div>
@@ -200,7 +198,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
         }}
       >
         {method === "phone" ? (
-          <Field id="login-phone" label="Mobile number" error={error} hint="We'll send a 6-digit code by SMS">
+          <Field id="login-phone" label={t("login.mobile")} error={error} hint={t("login.mobileHint")}>
             <div className="flex">
               <span className="flex items-center rounded-l-2xl border-2 border-r-0 border-ink/15 bg-ink/5 px-3 font-bold">
                 +91
@@ -219,7 +217,7 @@ export function CustomerLoginForm({ next }: { next: string }) {
             </div>
           </Field>
         ) : (
-          <Field id="login-email" label="Email address" error={error} hint="We'll email you a 6-digit code — no password needed">
+          <Field id="login-email" label={t("login.email")} error={error} hint={t("login.emailHint")}>
             <Input
               id="login-email"
               type="email"
@@ -233,17 +231,17 @@ export function CustomerLoginForm({ next }: { next: string }) {
           </Field>
         )}
         <Button type="submit" size="lg" disabled={busy}>
-          {busy ? "Sending…" : "Send code ✨"}
+          {busy ? t("login.sending") : t("login.send")}
         </Button>
       </form>
 
       {loginMethods.google && (
         <>
           <div className="flex items-center gap-3 text-sm text-ink-soft">
-            <span className="h-px flex-1 bg-ink/15" /> or <span className="h-px flex-1 bg-ink/15" />
+            <span className="h-px flex-1 bg-ink/15" /> {t("login.or")} <span className="h-px flex-1 bg-ink/15" />
           </div>
           <Button type="button" variant="ghost" size="lg" disabled={busy} onClick={continueWithGoogle} className="border-2 border-ink/15 bg-white">
-            <span className="font-bold text-sky-dark" aria-hidden>G</span> Continue with Google
+            <span className="font-bold text-sky-dark" aria-hidden>G</span> {t("login.google")}
           </Button>
         </>
       )}

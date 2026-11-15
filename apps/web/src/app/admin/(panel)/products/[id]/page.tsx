@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { paiseToRupeesInput } from "@toyshop/shared";
+import { paiseToRupeesInput, productTranslationsFromRow } from "@toyshop/shared";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { ProductForm, type ProductFormState } from "@/components/admin/ProductForm";
 import { SavedBanner } from "@/components/admin/SavedBanner";
 import { Button, Card } from "@/components/ui";
 import type { Category, Product, ProductImage } from "@/lib/catalog";
+import { isAutoTranslateConfigured } from "@/lib/autoTranslate";
 import { createClient } from "@/lib/supabase/server";
 import { deleteProduct, duplicateProduct } from "../actions";
 
@@ -30,7 +31,7 @@ export default async function EditProductPage({
       .select("id, storage_path, alt_text, position")
       .eq("product_id", id)
       .order("position"),
-    supabase.from("categories").select("id, name, slug, icon, color, position").order("position"),
+    supabase.from("categories").select("*").order("position"),
   ]);
   if (!product) notFound();
 
@@ -50,6 +51,7 @@ export default async function EditProductPage({
     weightGrams: p.weight_grams ? String(p.weight_grams) : "",
     bisLicense: p.bis_license,
     isFeatured: p.is_featured,
+    translations: productTranslationsFromRow(p.translations),
     images: ((images ?? []) as ProductImage[]).map((image) => ({
       storagePath: image.storage_path,
       altText: image.alt_text,
@@ -75,7 +77,7 @@ export default async function EditProductPage({
       )}
 
       {/* key resets the form after each save so it shows the saved values */}
-      <ProductForm
+      <ProductForm autoTranslate={isAutoTranslateConfigured()}
         key={p.updated_at}
         productId={p.id}
         photoFolderId={p.id}

@@ -1,8 +1,8 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { markOrderPaid } from "@/lib/orders";
 import { isValidWebhookSignature } from "@/lib/razorpay";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
+import { refreshCatalog } from "@/lib/revalidate";
 
 // Razorpay calls this directly when a payment succeeds, so orders are marked
 // paid even if the customer closed the browser before returning to the shop.
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const razorpayOrderId = payment?.order_id ?? event.payload?.order?.entity?.id;
     if (razorpayOrderId && payment?.id) {
       const updated = await markOrderPaid(createAdminClient(), { razorpayOrderId }, payment.id);
-      if (updated) revalidatePath("/", "layout");
+      if (updated) refreshCatalog();
     }
   }
   return NextResponse.json({ ok: true });
