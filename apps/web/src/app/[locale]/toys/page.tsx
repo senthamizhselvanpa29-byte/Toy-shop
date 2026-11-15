@@ -20,7 +20,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const categories = category ? await getCategories(t.locale) : [];
   const name = categories.find((item) => item.slug === category)?.name;
   return {
-    title: `${q ? `“${q}”` : name ?? t("header.allToys")} · Toy Shop`,
+    title: `${q ? `“${q}”` : name ?? t("header.allToys")}`,
     // Search results are not for search engines.
     robots: q ? { index: false } : undefined,
     alternates: alternatesFor(locale, category ? `/toys?category=${encodeURIComponent(category)}` : "/toys"),

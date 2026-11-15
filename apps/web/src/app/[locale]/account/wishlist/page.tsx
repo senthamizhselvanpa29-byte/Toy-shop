@@ -10,7 +10,7 @@ import { getWishlistProducts } from "@/lib/shop";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "My wishlist · Toy Shop", robots: { index: false } };
+export const metadata: Metadata = { title: "My wishlist", robots: { index: false } };
 
 export default async function WishlistPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;

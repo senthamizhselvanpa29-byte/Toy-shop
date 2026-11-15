@@ -41,7 +41,9 @@ export async function payWithRazorpay(orderId: string, checkout: RazorpayCheckou
       key: checkout.keyId,
       amount: checkout.amountPaise,
       currency: "INR",
-      name: "Toy Shop",
+      name: checkout.shopName,
+      // Razorpay needs a full https address for the logo.
+      ...(checkout.logoUrl?.startsWith("https://") ? { image: checkout.logoUrl } : {}),
       description: `Order ${checkout.orderNumber}`,
       order_id: checkout.razorpayOrderId,
       prefill: checkout.prefill,

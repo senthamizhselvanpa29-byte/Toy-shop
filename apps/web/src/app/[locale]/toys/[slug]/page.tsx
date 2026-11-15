@@ -25,11 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const t = getT(locale);
   const product = await getProductBySlug(slug, locale);
-  if (!product) return { title: `${t("product.notFound")} · Toy Shop` };
+  if (!product) return { title: `${t("product.notFound")}` };
   const description =
-    product.shortDescription || product.description.slice(0, 150) || `${product.name} at Toy Shop`;
+    product.shortDescription || product.description.slice(0, 150) || product.name;
   return {
-    title: `${product.name} · Toy Shop`,
+    title: `${product.name}`,
     description,
     alternates: alternatesFor(locale, `/toys/${slug}`),
     openGraph: {

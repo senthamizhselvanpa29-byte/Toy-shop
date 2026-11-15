@@ -11,7 +11,7 @@ import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "My account · Toy Shop", robots: { index: false } };
+export const metadata: Metadata = { title: "My account", robots: { index: false } };
 
 export default async function AccountPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;

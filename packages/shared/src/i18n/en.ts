@@ -391,6 +391,28 @@ export const en = {
   "notice.refundStarted": "Refund started — it usually reaches the customer in 5–7 working days.",
   "notice.refundFailed":
     "The automatic refund didn't go through. Please refund this payment in your Razorpay dashboard.",
+  "footer.contact": "Contact us",
+  "footer.policies": "Shop policies",
+  "footer.follow": "Follow us",
+  "policy.privacy": "Privacy policy",
+  "policy.terms": "Terms & conditions",
+  "policy.refunds": "Cancellation & refunds",
+  "policy.shipping": "Shipping & delivery",
+  "policy.updated": "Last updated {date}",
+  "policy.englishOnly": "This page is available in English.",
+  "contact.phone": "Phone",
+  "contact.email": "Email",
+  "contact.whatsapp": "WhatsApp",
+  "contact.chat": "Chat with us",
+  "contact.address": "Address",
+  "contact.grievance": "Grievance officer",
+  "contact.grievanceText": "For a complaint about an order or this website, contact {name} using the details above. We reply within 48 hours and resolve complaints within one month.",
+  "whatsapp.label": "Chat with us on WhatsApp",
+  "whatsapp.message": "Hi! I have a question about your toys.",
+  "announcement.close": "Close this message",
+  "paused.title": "We're not taking new orders right now",
+  "paused.default": "Please check back soon. You can still browse and save toys to your wishlist.",
+  "err.paused": "The shop isn't taking new orders right now. Please try again later.",
 } as const;
 
 export type MessageKey = keyof typeof en;

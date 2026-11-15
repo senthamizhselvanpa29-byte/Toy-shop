@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const UPDATES = [
   { file: "0006_order_management.sql", table: "shop_settings", column: "business_name" },
   { file: "0007_translations.sql", table: "products", column: "translations" },
+  { file: "0008_shop_identity.sql", table: "shop_settings", column: "gst_mode" },
 ] as const;
 
 // 42703: Postgres "column does not exist" (reading). PGRST204: the data API

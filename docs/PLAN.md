@@ -153,7 +153,7 @@ The launch plan (agreed 14 Nov 2026), one pull request per step:
 | 0 | Catch up | ✅ Done — owner ran `0006_order_management.sql` |
 | 1 | **Languages** 🌏 (Milestone 10) | ✅ Live — English `/`, Tamil `/ta`, Hindi `/hi`; Tamil/Hindi boxes + ✨ Auto-translate in the owner forms; pre-built, edge-cached pages |
 | 2 | **Speed** ⚡ | ✅ Built — see "Step 2 results" below. Owner still chooses the hosting region (Mumbai), switches on Speed Insights and presses "⚡ Speed up photos" on toys with older photos |
-| 3 | **Shop identity & invoices** 🏪 | Shop name, logo, contact, WhatsApp button, announcement bar, pause ordering; invoice numbering, GST mode, signature, notes, PDF; legal pages editor |
+| 3 | **Shop identity & invoices** 🏪 | ✅ Built — see "Step 3 results" below. Owner runs `0008_shop_identity.sql`, then merges |
 | 4 | **Money** 💰 | Cost price & margin per toy, profit dashboard by period, GST summary, best sellers, CSV export |
 | 5 | **Notifications** 📧 | Order emails to customers (placed, paid, shipped, delivered, cancelled); new-order alerts to the owner (Brevo) |
 | 6 | **Quality gate** 🛡️ | Tests inside the repo + GitHub Actions on every pull request, error & uptime alerts, go-live checklist |
@@ -181,10 +181,26 @@ Measured on a simulated mid-range phone on slow 4G with an empty cache (same toy
 
 Still to gain: account, cart and checkout pages talk to the database, which is in Ireland while the website's servers default to the USA. Putting both in Mumbai (or at least side by side) is the owner's choice in the Vercel and Supabase dashboards.
 
+### Step 3 results 🏪
+
+Everything below is changed by the owner in **Owner area → ⚙️ Settings**, with no code:
+
+| Tab | What the owner controls | Where shoppers see it |
+|---|---|---|
+| 🏪 Shop & contact | Shop name, logo (or an emoji), tagline in English/Tamil/Hindi, phone, email, address, state, grievance officer, WhatsApp button + first message, Instagram/Facebook/YouTube links | Header, footer, page titles, browser-tab icon, Razorpay payment window, Contact page, invoices |
+| 📣 Banner & holiday | A coloured banner with a message and link (3 languages); **holiday mode** that pauses new orders with a message | Top of every shop page; cart and checkout stop taking orders (also refused on the server) |
+| 🧾 Invoices | GST mode (not registered / regular / composition), GSTIN, HSN code, business name on invoices, invoice number prefix, financial-year numbering, next number, signature picture, signatory name, notes (e.g. UPI ID) | Every invoice; "See a sample invoice" preview for the owner |
+| 📄 Policy pages | Contact, Privacy, Terms, Cancellation & refunds, Shipping — suggested text included, editable in 3 languages, "use the suggested text again" | `/contact` and `/policies/…`, linked in the footer (Razorpay asks for these pages) |
+| 🚚 Delivery & payments | Delivery fee, free-delivery amount, cash on delivery limit, return days (as before) | Cart, checkout, policy pages |
+
+How invoice numbers work: each order gets the next number the moment it is placed — `INV/26-27/0001`, `INV/26-27/0002`, … — starting again from 1 every April when the financial year is included. Numbers are given by the database, so two orders can never share one, and nobody (not even the owner) can change a number afterwards. Orders placed before this update get numbers too, oldest first.
+
+"Download PDF" on an invoice opens the browser's print window; choosing **Save as PDF** saves an A4 file named after the invoice number (e.g. `INV-26-27-0001.pdf`).
+
 ## 9. Needed From the Owner Later
 
 - Razorpay account (PAN, bank account, GSTIN, website URL)
 - Domain name (e.g. `yourtoyshop.in`)
 - Google Play developer account (one-time ~$25) and Apple Developer account (~$99/year)
-- Shop name and logo (placeholder used until then)
+- ~~Shop name and logo~~ — the owner sets these in Settings (Step 3)
 - Real product photos and details to replace the demo items

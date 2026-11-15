@@ -6,17 +6,18 @@ import { cn } from "@/lib/cn";
 import type { Translator } from "@/lib/i18n";
 import { localePath } from "@/lib/locales";
 import type { ShopCategory } from "@/lib/shop";
+import type { ShopProfile } from "@/lib/shopProfile";
 import { AccountLink } from "./AccountLink";
+import { ShopLogo } from "./ShopLogo";
 
-export function ShopHeader({ categories, t }: { categories: ShopCategory[]; t: Translator }) {
+export type ShopBrand = Pick<ShopProfile, "name" | "logoUrl" | "logoEmoji" | "showNameWithLogo">;
+
+export function ShopHeader({ categories, t, shop }: { categories: ShopCategory[]; t: Translator; shop: ShopBrand }) {
   return (
     <header className="sticky top-0 z-30 border-b-2 border-ink/5 bg-cream/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-heading text-2xl" aria-label={t("header.home")}>
-          <span className="text-3xl" aria-hidden>
-            🧸
-          </span>
-          Toy <span className="-ml-1.5 text-bubblegum-dark">Shop</span>
+        <Link href="/" className="min-w-0 text-2xl" aria-label={`${shop.name} — ${t("header.home")}`}>
+          <ShopLogo {...shop} />
         </Link>
 
         <form action={localePath(t.locale, "/toys")} role="search" className="order-last w-full sm:order-none sm:ml-4 sm:w-auto sm:flex-1">

@@ -21,7 +21,7 @@ import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Order · Toy Shop", robots: { index: false } };
+export const metadata: Metadata = { title: "Order", robots: { index: false } };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

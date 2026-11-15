@@ -4,6 +4,7 @@ import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { buttonClasses, Card } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { missingDatabaseUpdates } from "@/lib/dbUpdates";
+import { readShopSettings } from "@/lib/shopProfile";
 import { createClient } from "@/lib/supabase/server";
 import { deleteDemoProducts } from "./products/actions";
 
@@ -23,7 +24,7 @@ export default async function AdminDashboard({
 }) {
   const { demoRemoved } = await searchParams;
   const supabase = await createClient();
-  const [missingUpdates, viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }, { data: orderRows }] =
+  const [missingUpdates, viewer, totalProducts, liveProducts, demoProducts, ownProducts, ownLive, lowStock, { count: categoryCount }, { data: orderRows }, shopSettings, { count: ownPages }] =
     await Promise.all([
       missingDatabaseUpdates(supabase),
       getViewer(),
@@ -45,6 +46,8 @@ export default async function AdminDashboard({
         .not("placed_at", "is", null)
         .order("placed_at", { ascending: false })
         .limit(5000),
+      readShopSettings(supabase),
+      supabase.from("shop_pages").select("slug", { count: "exact", head: true }),
     ]);
 
   // "Today" in India, whatever time zone the server runs in.
@@ -68,8 +71,15 @@ export default async function AdminDashboard({
     { label: "Categories", value: categoryCount ?? 0, icon: "🗂️" },
   ];
 
+  const shopNamed = Boolean(shopSettings.business_name && shopSettings.business_name !== "Toy Shop");
   const steps = [
     { done: true, label: "Log in to your owner area" },
+    {
+      done: shopNamed && Boolean(shopSettings.business_phone || shopSettings.business_email),
+      label: "Add your shop name, logo and contact details",
+      href: "/admin/settings/shop",
+    },
+    { done: (ownPages ?? 0) >= 4, label: "Read and confirm your policy pages", href: "/admin/settings/pages" },
     { done: (categoryCount ?? 0) > 0, label: "Set up your toy categories", href: "/admin/categories" },
     { done: ownProducts > 0, label: "Add your first toy with photos", href: "/admin/products/new" },
     { done: ownLive > 0, label: "Publish a toy to the shop", href: "/admin/products" },

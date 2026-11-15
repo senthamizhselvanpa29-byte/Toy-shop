@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { Button, buttonClasses, Card, TobySays } from "@/components/ui";
+import { ShopLogo } from "@/components/shop/ShopLogo";
 import { getViewer } from "@/lib/auth";
+import { readShopSettings, toShopProfile } from "@/lib/shopProfile";
+import { createClient } from "@/lib/supabase/server";
 import { signOut } from "../actions";
 
 export default async function AdminPanelLayout({
@@ -36,11 +39,14 @@ export default async function AdminPanelLayout({
     );
   }
 
+  const shop = toShopProfile(await readShopSettings(await createClient()), "en");
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <Link href="/admin" className="flex items-center gap-2 font-heading text-2xl">
-          <span aria-hidden>🧸</span> Toy Shop <span className="text-bubblegum-dark">Owner</span>
+        <Link href="/admin" className="flex min-w-0 items-center gap-2 font-heading text-2xl">
+          <ShopLogo name={shop.name} logoUrl={shop.logoUrl} logoEmoji={shop.logoEmoji} showNameWithLogo />
+          <span className="shrink-0 rounded-full bg-sunshine px-3 py-0.5 text-sm">Owner</span>
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-ink-soft sm:inline">{viewer.user.email}</span>

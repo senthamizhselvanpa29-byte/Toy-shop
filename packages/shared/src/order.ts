@@ -7,6 +7,8 @@ export type ShopSettings = {
   freeDeliveryAbovePaise: number;
   codEnabled: boolean;
   codMaxPaise: number;
+  // Holiday mode: the owner isn't taking new orders right now.
+  orderingPaused: boolean;
 };
 
 export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
@@ -14,6 +16,7 @@ export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   freeDeliveryAbovePaise: 49900,
   codEnabled: true,
   codMaxPaise: 500000,
+  orderingPaused: false,
 };
 
 // Delivery is free once the toys cost at least the free-delivery amount.

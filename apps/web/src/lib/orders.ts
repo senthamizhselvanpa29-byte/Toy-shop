@@ -13,17 +13,15 @@ import {
 import { productImageUrl } from "@/lib/catalog";
 
 export async function getShopSettings(supabase: SupabaseClient): Promise<ShopSettings> {
-  const { data } = await supabase
-    .from("shop_settings")
-    .select("delivery_fee_paise, free_delivery_above_paise, cod_enabled, cod_max_paise")
-    .eq("id", 1)
-    .maybeSingle();
+  // "*": columns added by later database updates may not exist yet.
+  const { data } = await supabase.from("shop_settings").select("*").eq("id", 1).maybeSingle();
   if (!data) return DEFAULT_SHOP_SETTINGS;
   return {
     deliveryFeePaise: data.delivery_fee_paise,
     freeDeliveryAbovePaise: data.free_delivery_above_paise,
     codEnabled: data.cod_enabled,
     codMaxPaise: data.cod_max_paise,
+    orderingPaused: data.ordering_paused === true,
   };
 }
 

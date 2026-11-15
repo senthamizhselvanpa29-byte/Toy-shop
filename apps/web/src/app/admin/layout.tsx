@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Owner area · Toy Shop",
+  title: "Owner area",
   robots: { index: false, follow: false },
 };
 

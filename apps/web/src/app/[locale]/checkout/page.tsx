@@ -9,7 +9,7 @@ import { isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Checkout · Toy Shop", robots: { index: false } };
+export const metadata: Metadata = { title: "Checkout", robots: { index: false } };
 
 export default async function CheckoutPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;

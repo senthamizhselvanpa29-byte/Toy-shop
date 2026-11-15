@@ -8,7 +8,7 @@ import { loginPath } from "@/lib/locales";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "My orders · Toy Shop", robots: { index: false } };
+export const metadata: Metadata = { title: "My orders", robots: { index: false } };
 
 const statusColor = {
   pending_payment: "orange",

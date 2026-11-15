@@ -64,3 +64,9 @@
     width: 100%;
   }
 }
+
+/* Invoices print on A4 paper ("Download PDF" saves the same layout). */
+@page {
+  size: A4;
+  margin: 12mm;
+}

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LOCALES, localePath } from "@/lib/locales";
+import { POLICY_SLUGS } from "@/lib/policyDrafts";
 import { getAllProductSlugs, getCategories } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
 
@@ -21,6 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     page("/", { changeFrequency: "daily", priority: 1 }),
     page("/toys", { changeFrequency: "daily", priority: 0.9 }),
+    page("/contact", { changeFrequency: "monthly", priority: 0.4 }),
+    ...POLICY_SLUGS.map((slug) => page(`/policies/${slug}`, { changeFrequency: "monthly", priority: 0.3 })),
     ...categories.map((category) =>
       page(`/toys?category=${category.slug}`, { changeFrequency: "weekly", priority: 0.7 }),
     ),

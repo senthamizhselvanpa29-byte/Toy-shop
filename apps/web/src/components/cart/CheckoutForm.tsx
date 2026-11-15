@@ -62,7 +62,8 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
   const codAllowed = quote.settings.codEnabled && quote.totalPaise <= quote.settings.codMaxPaise;
   const chosenMethod = method === "cod" && !codAllowed ? "" : method;
   const lines = quote.lines.filter((line) => line.quantity > 0);
-  const canPlace = orderingEnabled && Boolean(addressId) && Boolean(chosenMethod) && !loading && !busy && lines.length > 0;
+  const paused = quote.settings.orderingPaused;
+  const canPlace = orderingEnabled && !paused && Boolean(addressId) && Boolean(chosenMethod) && !loading && !busy && lines.length > 0;
 
   function submit() {
     if (!chosenMethod) return;
@@ -207,6 +208,11 @@ export function CheckoutForm({ addresses, defaultName, defaultPhone, onlinePayme
           )}
           {!orderingEnabled && (
             <p className="rounded-2xl bg-sunshine/30 px-4 py-3 text-sm">{t("checkout.notOpen")}</p>
+          )}
+          {orderingEnabled && paused && (
+            <p role="status" className="rounded-2xl bg-sunshine/30 px-4 py-3 text-sm" data-paused-checkout>
+              ⏸️ <strong>{t("paused.title")}.</strong> {t("paused.default")}
+            </p>
           )}
           <Button size="lg" disabled={!canPlace} onClick={submit}>
             {busy

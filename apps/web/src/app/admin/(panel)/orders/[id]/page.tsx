@@ -69,6 +69,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             ← All orders
           </Link>
           <h1 className="mt-1 text-3xl sm:text-4xl">Order {order.order_number}</h1>
+          {order.invoice_number && <p className="text-ink-soft">Invoice {order.invoice_number}</p>}
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge color="sky">
               {status.icon} {status.label}

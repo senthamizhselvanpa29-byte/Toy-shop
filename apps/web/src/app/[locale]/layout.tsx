@@ -4,14 +4,18 @@ import { notFound } from "next/navigation";
 import { MESSAGES } from "@toyshop/shared/messages";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { AnnouncementBar } from "@/components/shop/AnnouncementBar";
 import { CustomerProvider } from "@/components/shop/CustomerProvider";
 import { NavigationProgress } from "@/components/shop/NavigationProgress";
+import { PausedNotice } from "@/components/shop/PausedNotice";
 import { ShopFooter } from "@/components/shop/ShopFooter";
 import { ShopHeader } from "@/components/shop/ShopHeader";
+import { WhatsAppButton } from "@/components/shop/WhatsAppButton";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n";
 import { isLocale, LOCALES } from "@/lib/locales";
 import { getCategories } from "@/lib/shop";
+import { getShopProfile } from "@/lib/shopProfile";
 import { indicFontClass } from "./fonts";
 
 // One copy of the shop per language: "/" (English), "/ta" and "/hi".
@@ -23,7 +27,15 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  return isLocale(locale) ? { description: getT(locale)("meta.description") } : {};
+  if (!isLocale(locale)) return {};
+  const shop = await getShopProfile(locale);
+  return {
+    // Pages give their own title ("Puzzles"); the shop's name is added after it.
+    title: { default: shop.name, template: `%s · ${shop.name}` },
+    description: shop.tagline || getT(locale)("meta.description"),
+    applicationName: shop.name,
+    ...(shop.logoUrl ? { icons: { icon: shop.logoUrl, apple: shop.logoUrl } } : {}),
+  };
 }
 
 export default async function ShopLayout({
@@ -37,14 +49,16 @@ export default async function ShopLayout({
   if (!isLocale(locale)) notFound();
 
   const t = getT(locale);
-  const categories = await getCategories(locale);
+  const [categories, shop] = await Promise.all([getCategories(locale), getShopProfile(locale)]);
 
   return (
     <I18nProvider locale={locale} messages={MESSAGES[locale]} className={cn("contents", indicFontClass(locale))}>
       <CustomerProvider>
         <CartProvider>
           <NavigationProgress />
-          <ShopHeader categories={categories} t={t} />
+          {shop.paused && <PausedNotice message={shop.paused.message} t={t} />}
+          {shop.announcement && <AnnouncementBar {...shop.announcement} />}
+          <ShopHeader categories={categories} t={t} shop={shop} />
           <main className="mx-auto max-w-7xl px-4">
             {/* Keep this keyed Fragment. The page slot depends on error.tsx, whose
                 code can still be loading when React first reaches <main>; React
@@ -53,7 +67,8 @@ export default async function ShopLayout({
                 correctly instead. */}
             <Fragment key="page">{children}</Fragment>
           </main>
-          <ShopFooter categories={categories} t={t} />
+          <ShopFooter categories={categories} t={t} shop={shop} />
+          {shop.whatsapp && <WhatsAppButton number={shop.whatsapp.number} message={shop.whatsapp.message} />}
         </CartProvider>
       </CustomerProvider>
     </I18nProvider>

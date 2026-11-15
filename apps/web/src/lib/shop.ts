@@ -15,7 +15,7 @@ import { getSupabaseEnv, isSupabaseConfigured } from "@/lib/supabase/env";
 
 // Customer-facing reads. Uses a plain, signed-out client (no cookies); the
 // database rules only return published toys anyway.
-function publicClient() {
+export function publicClient() {
   const { url, anonKey } = getSupabaseEnv();
   return createSupabaseClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },

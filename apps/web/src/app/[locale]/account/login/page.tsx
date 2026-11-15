@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const metadata: Metadata = {
-  title: "Log in · Toy Shop",
+  title: "Log in",
   robots: { index: false },
 };
 

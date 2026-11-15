@@ -7,6 +7,12 @@ import { createRazorpayOrder, isRazorpayConfigured, razorpayKeyId } from "@/lib/
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { refreshCatalog } from "@/lib/revalidate";
+import { readShopSettings, shopImageUrl } from "@/lib/shopProfile";
+
+async function shopBrand(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const row = await readShopSettings(supabase);
+  return { shopName: row.business_name?.trim() || "Toy Shop", logoUrl: shopImageUrl(row.logo_path) };
+}
 
 export type RazorpayCheckout = {
   keyId: string;
@@ -14,6 +20,9 @@ export type RazorpayCheckout = {
   amountPaise: number;
   orderNumber: string;
   prefill: { name: string; email: string; contact: string };
+  // Shown at the top of Razorpay's payment window.
+  shopName: string;
+  logoUrl: string | null;
 };
 
 export type PlaceOrderResult =
@@ -42,6 +51,7 @@ export async function placeOrder(input: {
   const quote = await quoteCart(supabase, input.cart);
   const lines = quote.lines.filter((line) => line.quantity > 0);
   if (lines.length === 0) return { error: "err.cartEmpty", quote };
+  if (quote.settings.orderingPaused) return { error: "err.paused", quote };
   if (quote.hasProblems || quote.totalPaise !== input.expectedTotalPaise) {
     return { error: "err.changed", quote };
   }
@@ -129,7 +139,7 @@ export async function placeOrder(input: {
       name: address.full_name,
       email: user.email ?? "",
       contact: address.phone,
-    });
+    }, await shopBrand(supabase));
     return { orderId: order.id, razorpay };
   } catch {
     // The order stays "waiting for payment"; the customer can pay from the order page.
@@ -143,6 +153,7 @@ async function startRazorpayPayment(
   orderNumber: string,
   totalPaise: number,
   prefill: RazorpayCheckout["prefill"],
+  brand: Pick<RazorpayCheckout, "shopName" | "logoUrl">,
 ): Promise<RazorpayCheckout> {
   const razorpayOrder = await createRazorpayOrder({
     amountPaise: totalPaise,
@@ -156,6 +167,7 @@ async function startRazorpayPayment(
     amountPaise: totalPaise,
     orderNumber,
     prefill,
+    ...brand,
   };
 }
 
@@ -179,6 +191,7 @@ export async function payExistingOrder(orderId: string): Promise<{ error: string
   }
 
   const prefill = { name: order.ship_name, email: user.email ?? "", contact: order.ship_phone };
+  const brand = await shopBrand(supabase);
   if (order.razorpay_order_id) {
     return {
       razorpay: {
@@ -187,12 +200,13 @@ export async function payExistingOrder(orderId: string): Promise<{ error: string
         amountPaise: order.total_paise,
         orderNumber: order.order_number,
         prefill,
+        ...brand,
       },
     };
   }
   try {
     return {
-      razorpay: await startRazorpayPayment(createAdminClient(), order.id, order.order_number, order.total_paise, prefill),
+      razorpay: await startRazorpayPayment(createAdminClient(), order.id, order.order_number, order.total_paise, prefill, brand),
     };
   } catch {
     return { error: "err.startFailed" };

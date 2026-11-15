@@ -96,13 +96,19 @@ export default function CartPage() {
             <Card className="flex flex-col gap-4">
               <h2 className="text-2xl">{t("cart.summary")}</h2>
               <OrderSummary quote={quote} t={t} />
-              <Link
-                href="/checkout"
-                aria-disabled={loading}
-                className={buttonClasses("primary", "lg") + (loading ? " pointer-events-none opacity-60" : "")}
-              >
-                {t("cart.checkout")} 🔒
-              </Link>
+              {quote.settings.orderingPaused ? (
+                <p role="status" className="rounded-2xl bg-sunshine/30 px-4 py-3 text-sm" data-paused-cart>
+                  ⏸️ <strong>{t("paused.title")}.</strong> {t("paused.default")}
+                </p>
+              ) : (
+                <Link
+                  href="/checkout"
+                  aria-disabled={loading}
+                  className={buttonClasses("primary", "lg") + (loading ? " pointer-events-none opacity-60" : "")}
+                >
+                  {t("cart.checkout")} 🔒
+                </Link>
+              )}
               <Link href="/toys" className="text-center text-sm font-bold text-sky-dark hover:underline">
                 ← {t("cart.keepShopping")}
               </Link>
